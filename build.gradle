@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+}
+
+group 'com.zam'
+version '1.0-SNAPSHOT'
+mainClassName = "com.zam.logviewer.Main"
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+task local(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = "com.zam.logviewer.Main"
+}
+
+shadowJar {
+    baseName = 'shadow'
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/com.googlecode.lanterna/lanterna
+    compile group: 'com.googlecode.lanterna', name: 'lanterna', version: '3.0.1'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
