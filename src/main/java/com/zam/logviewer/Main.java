@@ -8,10 +8,10 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Optional;
 
 public class Main
 {
@@ -21,9 +21,18 @@ public class Main
         //defaultTerminalFactory.setForceTextTerminal(true);
         Terminal terminal = defaultTerminalFactory.createTerminal();
         Screen screen = new TerminalScreen(terminal);
-        try (BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in)))
+        BufferedReader stdIn = null;
+        try
         {
-            State state = new State(screen, terminal.getTerminalSize().getRows(), terminal.getTerminalSize().getColumns(), stdIn);
+            if (args.length == 0)
+            {
+                stdIn = new BufferedReader(new InputStreamReader(System.in));
+            }
+            else
+            {
+                stdIn = new BufferedReader(new FileReader(args[0]));
+            }
+            State state = new State(screen, stdIn);
             while (true)
             {
                 screen.refresh();
@@ -37,7 +46,16 @@ public class Main
                     case ArrowDown:
                         state.onDownArrow();
                         break;
+                    case Escape:
+                        return;
                 }
+            }
+        }
+        finally
+        {
+            if (stdIn != null)
+            {
+                stdIn.close();
             }
         }
     }
@@ -45,21 +63,20 @@ public class Main
     private static final class State
     {
         private static final int SCROLL_BY = 10;
-        private final LinkedList<String> lines = new LinkedList<>();
+        private final Node head = new Node();
+        private final Node tail = new Node();
         private final Screen screen;
         private final BufferedReader stdIn;
+        private Node currentLineNode;
         private int highlightedRow;
-        private int rowCount;
-        private int colCount;
-        private int topRowNum;
         private int bottomRowNum;
 
-        private State(Screen screen, int rowCount, int colCount, BufferedReader stdIn) throws IOException
+        private State(Screen screen, BufferedReader stdIn) throws IOException
         {
+            this.head.next = tail;
+            this.tail.prev = head;
             this.screen = screen;
             this.bottomRowNum = getTopPaneRowCount();
-            this.rowCount = rowCount;
-            this.colCount = colCount;
             this.stdIn = stdIn;
             screen.setCursorPosition(TerminalPosition.TOP_LEFT_CORNER);
             for (int i = 0; i < getTopPaneRowCount(); i++)
@@ -71,9 +88,11 @@ public class Main
                     break;
                 }
                 line = truncateLine(line);
-                lines.addLast(line);
+                addLast(line);
                 screen.newTextGraphics().putString(0, i, line);
             }
+            currentLineNode = head.next;
+            renderBottomPane(currentLineNode.line);
             screen.startScreen();
         }
 
@@ -82,62 +101,111 @@ public class Main
             return screen.getTerminalSize().getRows() / 2;
         }
 
-        void onDownArrow() throws IOException
+        private int getColCount()
         {
-            if (highlightedRow == bottomRowNum)
+            return screen.getTerminalSize().getColumns();
+        }
+
+        private Optional<Node> nextNode(Node node) throws IOException
+        {
+            if (node.next.line == null)
+            {
+                // We need to load more data
+                String line = this.stdIn.readLine();
+                if (line == null)
+                {
+                    // We've no more strings to read
+                    return Optional.empty();
+                }
+
+                line = truncateLine(line);
+                addLast(line);
+            }
+
+            return Optional.ofNullable(node.next);
+        }
+
+        private void onDownArrow() throws IOException
+        {
+            if (highlightedRow == bottomRowNum - 1)
             {
                 // We are already at the bottom
+                Node cur = currentLineNode;
                 for (int i = 0; i < SCROLL_BY; i++)
                 {
-                    String line = this.stdIn.readLine();
-                    if (line == null)
+                    Optional<Node> next = nextNode(cur);
+                    if (! next.isPresent())
                     {
                         // We've no more strings to read
                         break;
                     }
-                    lines.addLast(truncateLine(line));
+                    cur = next.get();
                     ++bottomRowNum;
                 }
-                renderTerminal();
+                renderTopPane();
                 return;
             }
             else
             {
                 screen.setCursorPosition(screen.getCursorPosition().withRelativeRow(1));
+                currentLineNode = currentLineNode.next;
+                renderBottomPane(currentLineNode.line);
                 screen.refresh();
             }
 
             ++highlightedRow;
         }
 
+        void onUpArrow()
+        {
+
+        }
+
+        private void addLast(String line)
+        {
+            Node latest = new Node();
+            tail.prev.next = latest;
+            latest.prev = tail.prev;
+            latest.next = tail;
+            tail.prev = latest;
+            latest.line = line;
+        }
+
+        private void renderBottomPane(String currentLine)
+        {
+            screen.newTextGraphics().putString(0, getTopPaneRowCount() + 1, truncateLine("Length of string: " + currentLine.trim().length()));
+        }
+
         private String truncateLine(String line)
         {
-            if (line.length() > colCount)
+            if (line.length() > getColCount())
             {
-                return line.substring(0, colCount) + "\n";
+                return line.substring(0, getColCount()) + "\n";
             }
             else
             {
-                return String.format("%1$-" + colCount + "s", line);
+                return String.format("%1$-" + getColCount() + "s", line);
             }
         }
 
-        private void renderTerminal() throws IOException
+        private void renderTopPane() throws IOException
         {
-            int i = -1;
-            Iterator<String> reverseIt = lines.descendingIterator();
-            while (reverseIt.hasNext() && ++i <= getTopPaneRowCount())
+            int i = 0;
+            Node cur = tail;
+            while (cur.prev.line != null)
             {
-                String line = reverseIt.next();
-                screen.newTextGraphics().putString(0, getTopPaneRowCount() - i, line);
+                cur = cur.prev;
+                screen.newTextGraphics().putString(0, getTopPaneRowCount() - i++, cur.line);
             }
             screen.setCursorPosition(new TerminalPosition(0, getTopPaneRowCount() - SCROLL_BY));
             screen.refresh();
         }
 
-        void onUpArrow()
+        private static final class Node
         {
-
+            private Node next;
+            private Node prev;
+            private String line;
         }
     }
 }
