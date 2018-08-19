@@ -46,6 +46,9 @@ public class Main
                     case ArrowDown:
                         state.onDownArrow();
                         break;
+                    case ArrowUp:
+                        state.onUpArrow();
+                        break;
                     case Escape:
                         return;
                 }
@@ -125,6 +128,16 @@ public class Main
             return Optional.ofNullable(node.next);
         }
 
+        private Optional<Node> prevNode(Node node) throws IOException
+        {
+            if (node.prev.line == null)
+            {
+                return Optional.empty();
+            }
+
+            return Optional.of(node.prev);
+        }
+
         private void onDownArrow() throws IOException
         {
             if (highlightedRow == bottomRowNum - 1)
@@ -142,7 +155,7 @@ public class Main
                     cur = next.get();
                     ++bottomRowNum;
                 }
-                renderTopPane();
+                renderTopPaneFromBottom(cur.next);
                 return;
             }
             else
@@ -156,9 +169,34 @@ public class Main
             ++highlightedRow;
         }
 
-        void onUpArrow()
+        void onUpArrow() throws IOException
         {
+            if (screen.getCursorPosition().getRow() == 0)
+            {
+                Node cur = currentLineNode;
+                for (int i = 0; i < SCROLL_BY; i++)
+                {
+                    Optional<Node> prev = prevNode(cur);
+                    if (! prev.isPresent())
+                    {
+                        // We've no more strings to read
+                        break;
+                    }
+                    cur = prev.get();
+                    --bottomRowNum;
+                }
+                renderTopPaneFromTop(cur.prev);
+                return;
+            }
+            else
+            {
+                screen.setCursorPosition(screen.getCursorPosition().withRelativeRow(-1));
+                currentLineNode = currentLineNode.prev;
+                renderBottomPane(currentLineNode.line);
+                screen.refresh();
+            }
 
+            --highlightedRow;
         }
 
         private void addLast(String line)
@@ -188,16 +226,29 @@ public class Main
             }
         }
 
-        private void renderTopPane() throws IOException
+        private void renderTopPaneFromBottom(Node bottomNode) throws IOException
         {
             int i = 0;
-            Node cur = tail;
+            Node cur = bottomNode;
             while (cur.prev.line != null)
             {
                 cur = cur.prev;
                 screen.newTextGraphics().putString(0, getTopPaneRowCount() - i++, cur.line);
             }
             screen.setCursorPosition(new TerminalPosition(0, getTopPaneRowCount() - SCROLL_BY));
+            screen.refresh();
+        }
+
+        private void renderTopPaneFromTop(Node bottomNode) throws IOException
+        {
+            int i = 0;
+            Node cur = bottomNode;
+            while (cur.next.line != null && i <= getTopPaneRowCount())
+            {
+                cur = cur.next;
+                screen.newTextGraphics().putString(0, i++, cur.line);
+            }
+            screen.setCursorPosition(new TerminalPosition(0, SCROLL_BY));
             screen.refresh();
         }
 
