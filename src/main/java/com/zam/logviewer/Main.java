@@ -5,6 +5,7 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+import com.googlecode.lanterna.terminal.SimpleTerminalResizeListener;
 import com.googlecode.lanterna.terminal.Terminal;
 
 import java.io.BufferedReader;
@@ -21,6 +22,8 @@ public class Main
         //defaultTerminalFactory.setForceTextTerminal(true);
         Terminal terminal = defaultTerminalFactory.createTerminal();
         Screen screen = new TerminalScreen(terminal);
+        SimpleTerminalResizeListener resizeListener = new SimpleTerminalResizeListener(screen.getTerminalSize());
+        terminal.addResizeListener(resizeListener);
         BufferedReader stdIn = null;
         try
         {
@@ -147,7 +150,7 @@ public class Main
                 for (int i = 0; i < SCROLL_BY; i++)
                 {
                     Optional<Node> next = nextNode(cur);
-                    if (! next.isPresent())
+                    if (!next.isPresent())
                     {
                         // We've no more strings to read
                         break;
@@ -171,13 +174,17 @@ public class Main
 
         void onUpArrow() throws IOException
         {
-            if (screen.getCursorPosition().getRow() == 0)
+            if (highlightedRow == 0)
+            {
+                return;
+            }
+            else if (screen.getCursorPosition().getRow() == 0)
             {
                 Node cur = currentLineNode;
                 for (int i = 0; i < SCROLL_BY; i++)
                 {
                     Optional<Node> prev = prevNode(cur);
-                    if (! prev.isPresent())
+                    if (!prev.isPresent())
                     {
                         // We've no more strings to read
                         break;
@@ -211,7 +218,8 @@ public class Main
 
         private void renderBottomPane(String currentLine)
         {
-            screen.newTextGraphics().putString(0, getTopPaneRowCount() + 1, truncateLine("Length of string: " + currentLine.trim().length()));
+            String message = truncateLine("Length of string: " + currentLine.trim().length());
+            screen.newTextGraphics().putString(0, getTopPaneRowCount() + 1, message);
         }
 
         private String truncateLine(String line)
