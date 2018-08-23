@@ -35,7 +35,8 @@ public class Main
                 stdIn = new BufferedReader(new FileReader(args[0]));
             }
             LogViewerScreen logViewerScreen = new LogViewerScreen(screen);
-            LogViewer logViewer = new LogViewer(logViewerScreen, stdIn);
+            LogViewer logViewer = new LogViewer(logViewerScreen, stdIn, new RenderLengthOfLine());
+            terminal.addResizeListener(logViewer);
             while (true)
             {
                 screen.refresh();

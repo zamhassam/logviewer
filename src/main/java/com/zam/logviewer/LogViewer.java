@@ -1,24 +1,34 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.TerminalPosition;
+import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.TerminalResizeListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
-final class LogViewer
+final class LogViewer implements TerminalResizeListener
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogViewer.class);
     private static final int MAX_SCROLL_BY = 10;
     private final Node head = new Node();
     private final Node tail = new Node();
+    private final RenderLengthOfLine bottomPaneRenderer;
     private final LogViewerScreen screen;
     private final BufferedReader stdIn;
     private Node currentLineNode;
     private int highlightedRow;
     private int bottomRowNum;
 
-    LogViewer(LogViewerScreen screen, BufferedReader stdIn) throws IOException
+    LogViewer(LogViewerScreen screen, BufferedReader stdIn, RenderLengthOfLine bottomPaneRenderer) throws IOException
     {
+        this.bottomPaneRenderer = bottomPaneRenderer;
         this.head.next = tail;
         this.tail.prev = head;
         this.screen = screen;
@@ -153,8 +163,15 @@ final class LogViewer
 
     private void renderBottomPane(String currentLine)
     {
-        String message = truncateLine("Length of string: " + currentLine.trim().length());
-        screen.putString(0, getTopPaneRowCount() + 1, message);
+        List<String> rows = bottomPaneRenderer.renderBottomPaneContents(currentLine);
+        Iterator<String> rowIter = rows.iterator();
+        for (int rowNum = getTopPaneRowCount();
+             rowNum < screen.getTerminalSize().getRows() && rowIter.hasNext();
+             rowNum++)
+        {
+            String message = truncateLine(rowIter.next());
+            screen.putString(0, getTopPaneRowCount() + 1, message);
+        }
     }
 
     private String truncateLine(String line)
@@ -181,10 +198,10 @@ final class LogViewer
         screen.setCursorPosition(new TerminalPosition(0, getTopPaneRowCount() - getScrollBy()));
     }
 
-    private void renderTopPaneFromTop(Node bottomNode) throws IOException
+    private void renderTopPaneFromTop(Node topNode) throws IOException
     {
         int i = 0;
-        Node cur = bottomNode;
+        Node cur = topNode;
         while (cur.next.line != null && i <= getTopPaneRowCount())
         {
             cur = cur.next;
@@ -196,6 +213,27 @@ final class LogViewer
     private int getScrollBy()
     {
         return Math.min(MAX_SCROLL_BY, Math.max(1, (int) (0.3 * screen.getTerminalSize().getRows())));
+    }
+
+    @Override
+    public void onResized(Terminal terminal, TerminalSize newSize)
+    {
+        int topRowNodeOffset = newSize.getRows() / 2;
+        Node topNode = currentLineNode;
+        int i = 0;
+        while (topNode.prev.line != null && i < topRowNodeOffset)
+        {
+            topNode = topNode.prev;
+        }
+        try
+        {
+            renderTopPaneFromTop(topNode);
+            screen.refresh();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Couldn't resize.");
+        }
     }
 
     private static final class Node
