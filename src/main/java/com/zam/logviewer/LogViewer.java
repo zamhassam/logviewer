@@ -166,11 +166,19 @@ final class LogViewer implements TerminalResizeListener
         List<String> rows = bottomPaneRenderer.renderBottomPaneContents(currentLine);
         Iterator<String> rowIter = rows.iterator();
         for (int rowNum = getTopPaneRowCount();
-             rowNum < screen.getTerminalSize().getRows() && rowIter.hasNext();
+             rowNum < screen.getTerminalSize().getRows();
              rowNum++)
         {
-            String message = truncateLine(rowIter.next());
-            screen.putString(0, getTopPaneRowCount() + 1, message);
+            final String message;
+            if (rowIter.hasNext())
+            {
+                message = rowIter.next();
+            }
+            else
+            {
+                message = "";
+            }
+            screen.putString(0, rowNum, truncateLine(message));
         }
     }
 

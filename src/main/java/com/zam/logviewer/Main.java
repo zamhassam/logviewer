@@ -35,7 +35,7 @@ public class Main
                 stdIn = new BufferedReader(new FileReader(args[0]));
             }
             LogViewerScreen logViewerScreen = new LogViewerScreen(screen);
-            LogViewer logViewer = new LogViewer(logViewerScreen, stdIn, new RenderLengthOfLine());
+            LogViewer logViewer = new LogViewer(logViewerScreen, stdIn, new RenderLengthOfLine("src/main/resources/FIX42.xml"));
             terminal.addResizeListener(logViewer);
             while (true)
             {
