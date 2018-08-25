@@ -14,17 +14,17 @@ import java.io.InputStreamReader;
 
 public class Main
 {
-    public static void main(String[] args) throws IOException
+    public static void main(final String[] args) throws IOException
     {
-        DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
+        final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
         defaultTerminalFactory.setForceTextTerminal(true);
-        Terminal terminal = defaultTerminalFactory.createTerminal();
+        final Terminal terminal = defaultTerminalFactory.createTerminal();
         BufferedReader stdIn = null;
         try
         {
-            Screen screen = new TerminalScreen(terminal);
+            final Screen screen = new TerminalScreen(terminal);
             screen.startScreen();
-            SimpleTerminalResizeListener resizeListener = new SimpleTerminalResizeListener(screen.getTerminalSize());
+            final SimpleTerminalResizeListener resizeListener = new SimpleTerminalResizeListener(screen.getTerminalSize());
             terminal.addResizeListener(resizeListener);
             if (args.length == 0)
             {
@@ -34,13 +34,13 @@ public class Main
             {
                 stdIn = new BufferedReader(new FileReader(args[0]));
             }
-            LogViewerScreen logViewerScreen = new LogViewerScreen(screen);
-            LogViewer logViewer = new LogViewer(logViewerScreen, stdIn, new RenderLengthOfLine("src/main/resources/FIX42.xml"));
+            final LogViewerScreen logViewerScreen = new LogViewerScreen(screen);
+            final LogViewer logViewer = new LogViewer(logViewerScreen, stdIn, new RenderLengthOfLine("src/main/resources/FIX42.xml"));
             terminal.addResizeListener(logViewer);
             while (true)
             {
                 screen.refresh();
-                KeyStroke keyStroke = screen.readInput();
+                final KeyStroke keyStroke = screen.readInput();
                 if (keyStroke == null || keyStroke.getKeyType() == null)
                 {
                     continue;

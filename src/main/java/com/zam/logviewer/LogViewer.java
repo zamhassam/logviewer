@@ -26,7 +26,7 @@ final class LogViewer implements TerminalResizeListener
     private int highlightedRow;
     private int bottomRowNum;
 
-    LogViewer(LogViewerScreen screen, BufferedReader stdIn, RenderLengthOfLine bottomPaneRenderer) throws IOException
+    LogViewer(final LogViewerScreen screen, final BufferedReader stdIn, final RenderLengthOfLine bottomPaneRenderer) throws IOException
     {
         this.bottomPaneRenderer = bottomPaneRenderer;
         this.head.next = tail;
@@ -37,14 +37,14 @@ final class LogViewer implements TerminalResizeListener
         screen.setCursorPosition(TerminalPosition.TOP_LEFT_CORNER);
         for (int i = 0; i < getTopPaneRowCount(); i++)
         {
-            String line = this.stdIn.readLine();
+            final String line = this.stdIn.readLine();
             if (line == null)
             {
                 // We've no more strings to read
                 break;
             }
             addLast(line);
-            screen.putString(0, i, line);
+            screen.putString(i, line);
         }
         currentLineNode = head.next;
         renderBottomPane(currentLineNode.line);
@@ -60,12 +60,12 @@ final class LogViewer implements TerminalResizeListener
         return screen.getTerminalSize().getColumns();
     }
 
-    private Optional<Node> nextNode(Node node) throws IOException
+    private Optional<Node> nextNode(final Node node) throws IOException
     {
         if (node.next.line == null)
         {
             // We need to load more data
-            String line = this.stdIn.readLine();
+            final String line = this.stdIn.readLine();
             if (line == null)
             {
                 // We've no more strings to read
@@ -78,7 +78,7 @@ final class LogViewer implements TerminalResizeListener
         return Optional.ofNullable(node.next);
     }
 
-    private Optional<Node> prevNode(Node node)
+    private Optional<Node> prevNode(final Node node)
     {
         if (node.prev.line == null)
         {
@@ -96,7 +96,7 @@ final class LogViewer implements TerminalResizeListener
             Node cur = currentLineNode;
             for (int i = 0; i < getScrollBy(); i++)
             {
-                Optional<Node> next = nextNode(cur);
+                final Optional<Node> next = nextNode(cur);
                 if (!next.isPresent())
                 {
                     // We've no more strings to read
@@ -118,7 +118,7 @@ final class LogViewer implements TerminalResizeListener
         ++highlightedRow;
     }
 
-    void onUpArrow() throws IOException
+    void onUpArrow()
     {
         if (highlightedRow == 0)
         {
@@ -129,7 +129,7 @@ final class LogViewer implements TerminalResizeListener
             Node cur = currentLineNode;
             for (int i = 0; i < getScrollBy(); i++)
             {
-                Optional<Node> prev = prevNode(cur);
+                final Optional<Node> prev = prevNode(cur);
                 if (!prev.isPresent())
                 {
                     // We've no more strings to read
@@ -151,9 +151,9 @@ final class LogViewer implements TerminalResizeListener
         --highlightedRow;
     }
 
-    private void addLast(String line)
+    private void addLast(final String line)
     {
-        Node latest = new Node();
+        final Node latest = new Node();
         tail.prev.next = latest;
         latest.prev = tail.prev;
         latest.next = tail;
@@ -161,10 +161,10 @@ final class LogViewer implements TerminalResizeListener
         latest.line = line;
     }
 
-    private void renderBottomPane(String currentLine)
+    private void renderBottomPane(final String currentLine)
     {
-        List<String> rows = bottomPaneRenderer.renderBottomPaneContents(currentLine);
-        Iterator<String> rowIter = rows.iterator();
+        final List<String> rows = bottomPaneRenderer.renderBottomPaneContents(currentLine);
+        final Iterator<String> rowIter = rows.iterator();
         for (int rowNum = getTopPaneRowCount();
              rowNum < screen.getTerminalSize().getRows();
              rowNum++)
@@ -178,11 +178,11 @@ final class LogViewer implements TerminalResizeListener
             {
                 message = "";
             }
-            screen.putString(0, rowNum, truncateLine(message));
+            screen.putString(rowNum, truncateLine(message));
         }
     }
 
-    private String truncateLine(String line)
+    private String truncateLine(final String line)
     {
         if (line.length() > getColCount())
         {
@@ -194,26 +194,26 @@ final class LogViewer implements TerminalResizeListener
         }
     }
 
-    private void renderTopPaneFromBottom(Node bottomNode) throws IOException
+    private void renderTopPaneFromBottom(final Node bottomNode)
     {
         int i = 0;
         Node cur = bottomNode;
         while (cur.prev.line != null)
         {
             cur = cur.prev;
-            screen.putString(0, getTopPaneRowCount() - i++, truncateLine(cur.line));
+            screen.putString(getTopPaneRowCount() - i++, truncateLine(cur.line));
         }
         screen.setCursorPosition(new TerminalPosition(0, getTopPaneRowCount() - getScrollBy()));
     }
 
-    private void renderTopPaneFromTop(Node topNode) throws IOException
+    private void renderTopPaneFromTop(final Node topNode)
     {
         int i = 0;
         Node cur = topNode;
         while (cur.next.line != null && i <= getTopPaneRowCount())
         {
             cur = cur.next;
-            screen.putString(0, i++, truncateLine(cur.line));
+            screen.putString(i++, truncateLine(cur.line));
         }
         screen.setCursorPosition(new TerminalPosition(0, getScrollBy()));
     }
@@ -224,11 +224,11 @@ final class LogViewer implements TerminalResizeListener
     }
 
     @Override
-    public void onResized(Terminal terminal, TerminalSize newSize)
+    public void onResized(final Terminal terminal, final TerminalSize newSize)
     {
-        int topRowNodeOffset = newSize.getRows() / 2;
+        final int topRowNodeOffset = newSize.getRows() / 2;
         Node topNode = currentLineNode;
-        int i = 0;
+        final int i = 0;
         while (topNode.prev.line != null && i < topRowNodeOffset)
         {
             topNode = topNode.prev;
@@ -238,7 +238,7 @@ final class LogViewer implements TerminalResizeListener
             renderTopPaneFromTop(topNode);
             screen.refresh();
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             LOGGER.error("Couldn't resize.");
         }

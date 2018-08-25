@@ -10,12 +10,12 @@ final class LogViewerScreen
 {
     private final Screen screen;
 
-    LogViewerScreen(Screen screen)
+    LogViewerScreen(final Screen screen)
     {
         this.screen = screen;
     }
 
-    void setCursorPosition(TerminalPosition position)
+    void setCursorPosition(final TerminalPosition position)
     {
         screen.setCursorPosition(position);
     }
@@ -30,12 +30,12 @@ final class LogViewerScreen
         return screen.getCursorPosition();
     }
 
-    void putString(int col, int row, String string)
+    void putString(final int row, final String string)
     {
-        screen.newTextGraphics().putString(col, row, string);
+        screen.newTextGraphics().putString(0, row, string);
     }
 
-    public void refresh() throws IOException
+    void refresh() throws IOException
     {
         screen.refresh();
     }
