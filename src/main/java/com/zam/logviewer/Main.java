@@ -6,6 +6,8 @@ import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.SimpleTerminalResizeListener;
 import com.googlecode.lanterna.terminal.Terminal;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,6 +16,8 @@ import java.io.InputStreamReader;
 
 public class Main
 {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public static void main(final String[] args) throws IOException
     {
         final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
@@ -59,6 +63,10 @@ public class Main
                         return;
                 }
             }
+        }
+        catch (final Exception e)
+        {
+            LOGGER.fatal("Unexpected error:", e);
         }
         finally
         {
