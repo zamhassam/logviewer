@@ -4,7 +4,6 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
-import com.googlecode.lanterna.terminal.SimpleTerminalResizeListener;
 import com.googlecode.lanterna.terminal.Terminal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,8 +27,6 @@ public class Main
         {
             final Screen screen = new TerminalScreen(terminal);
             screen.startScreen();
-            final SimpleTerminalResizeListener resizeListener = new SimpleTerminalResizeListener(screen.getTerminalSize());
-            terminal.addResizeListener(resizeListener);
             if (args.length == 0)
             {
                 stdIn = new BufferedReader(new InputStreamReader(System.in));
@@ -38,8 +35,12 @@ public class Main
             {
                 stdIn = new BufferedReader(new FileReader(args[0]));
             }
-            final LogViewerScreen logViewerScreen = new LogViewerScreen(screen);
-            final LogViewer logViewer = new LogViewer(logViewerScreen, stdIn, new RenderLengthOfLine("src/main/resources/FIX42.xml"));
+            final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
+            final LogViewer
+                    logViewer =
+                    new LogViewer(logViewerScreen,
+                                  stdIn,
+                                  new RenderLengthOfLine("src/main/resources/FIX42.xml"));
             terminal.addResizeListener(logViewer);
             while (true)
             {
@@ -53,11 +54,11 @@ public class Main
                 {
                     case ArrowDown:
                         logViewer.onDownArrow();
-                        screen.refresh();
+                        //screen.refresh();
                         break;
                     case ArrowUp:
                         logViewer.onUpArrow();
-                        screen.refresh();
+                        //screen.refresh();
                         break;
                     case Escape:
                         return;
