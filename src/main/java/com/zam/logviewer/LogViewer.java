@@ -16,7 +16,7 @@ import java.util.Optional;
 final class LogViewer implements TerminalResizeListener
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final int PERCENT_OF_SCREEN_ABOVE = 70;
+    private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
     private final Node tail = new Node();
     private final RenderLengthOfLine bottomPaneRenderer;
     private final LogViewerScreen screen;
@@ -46,7 +46,7 @@ final class LogViewer implements TerminalResizeListener
     private void redrawScreen(final boolean biasTop) throws IOException
     {
         topPaneRowCount = screen.getTerminalSize().getRows() / 2;
-        final int biggerPercent = topPaneRowCount / PERCENT_OF_SCREEN_ABOVE;
+        final int biggerPercent = (int) (topPaneRowCount * PERCENT_OF_SCREEN_ABOVE);
         final int topRowCount;
         final int bottomRowCount;
         if (biasTop)
@@ -59,10 +59,11 @@ final class LogViewer implements TerminalResizeListener
             bottomRowCount = Math.min(currentLineNode.row, biggerPercent);
             topRowCount = topPaneRowCount - bottomRowCount + 1;
         }
-        LOGGER.debug("Top row count: {}; Bottom row count: {}; Number of rows: {}",
+        LOGGER.debug("Top row count: {}; Bottom row count: {}; Number of rows: {}; Assumed number: {}",
                      topRowCount,
                      bottomRowCount,
-                     topPaneRowCount);
+                     topPaneRowCount,
+                     topRowCount + bottomRowCount + 1);
         topRowNode = this.currentLineNode;
         bottomRowNode = this.currentLineNode;
         for (int i = topRowCount - 1; i >= 0; i--)
@@ -84,7 +85,7 @@ final class LogViewer implements TerminalResizeListener
             final Optional<Node> next = nextNode(bottomRowNode);
             if (!next.isPresent())
             {
-                screen.putString(i, truncateLine(""));
+                screen.putString(topRowCount + 1 + i, truncateLine(""));
                 continue;
             }
             bottomRowNode = next.get();

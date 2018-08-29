@@ -20,7 +20,7 @@ public class Main
     public static void main(final String[] args) throws IOException
     {
         final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
-        defaultTerminalFactory.setForceTextTerminal(true);
+//        defaultTerminalFactory.setForceTextTerminal(true);
         final Terminal terminal = defaultTerminalFactory.createTerminal();
         BufferedReader stdIn = null;
         try
