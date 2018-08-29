@@ -115,26 +115,26 @@ final class LogViewer implements TerminalResizeListener
             final Optional<TerminalLines.Node> prev = terminalLines.prevNode(terminalLines.getTopLineNode());
             if (!prev.isPresent())
             {
-                screen.putString(i, truncateLine(""));
+                screen.putString(i, "");
                 continue;
             }
             terminalLines.setTopLineNode(prev.get());
             LOGGER.debug("Drawing top row: {}", i);
-            screen.putString(i, truncateLine(terminalLines.getTopLineNode().getLine()));
+            screen.putString(i, terminalLines.getTopLineNode().getLine());
         }
-        screen.putString(topRowCount, truncateLine(terminalLines.getCurrentLineNode().getLine()));
+        screen.putString(topRowCount, terminalLines.getCurrentLineNode().getLine());
         setCursorPosition(new TerminalPosition(0, topRowCount));
         for (int i = 0; i < bottomRowCount; i++)
         {
             final Optional<TerminalLines.Node> next = terminalLines.nextNode(terminalLines.getBottomLineNode());
             if (!next.isPresent())
             {
-                screen.putString(topRowCount + 1 + i, truncateLine(""));
+                screen.putString(topRowCount + 1 + i, "");
                 continue;
             }
             terminalLines.setBottomLineNode(next.get());
             LOGGER.debug("Drawing bottom row: {}", i);
-            screen.putString(topRowCount + 1 + i, truncateLine(terminalLines.getBottomLineNode().getLine()));
+            screen.putString(topRowCount + 1 + i, terminalLines.getBottomLineNode().getLine());
         }
         renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
@@ -167,19 +167,7 @@ final class LogViewer implements TerminalResizeListener
             {
                 message = "";
             }
-            screen.putString(rowNum, truncateLine(message));
-        }
-    }
-
-    private String truncateLine(final String line)
-    {
-        if (line.length() > getColCount())
-        {
-            return line.substring(0, getColCount()) + "\n";
-        }
-        else
-        {
-            return String.format("%1$-" + getColCount() + "s", line);
+            screen.putString(rowNum, message);
         }
     }
 

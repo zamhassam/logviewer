@@ -35,7 +35,7 @@ final class LogViewerScreen
 
     void putString(final int row, final String string)
     {
-        screen.newTextGraphics().putString(0, row, string);
+        screen.newTextGraphics().putString(0, row, truncatePadLine(string));
     }
 
     void refresh() throws IOException
@@ -51,5 +51,18 @@ final class LogViewerScreen
     void doResize()
     {
         screen.doResizeIfNecessary();
+    }
+
+    private String truncatePadLine(final String line)
+    {
+        final int columns = screen.getTerminalSize().getColumns();
+        if (line.length() > columns)
+        {
+            return line.substring(0, columns) + "\n";
+        }
+        else
+        {
+            return String.format("%1$-" + columns + "s", line);
+        }
     }
 }
