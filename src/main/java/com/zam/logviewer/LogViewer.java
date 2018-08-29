@@ -17,29 +17,17 @@ final class LogViewer implements TerminalResizeListener
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
-    private final Node tail = new Node();
     private final RenderLengthOfLine bottomPaneRenderer;
     private final LogViewerScreen screen;
-    private final BufferedReader stdIn;
-    private Node topRowNode;
-    private Node currentLineNode;
-    private Node bottomRowNode;
+    private final TerminalLines terminalLines;
     private int topPaneRowCount;
 
     LogViewer(final LogViewerScreen screen, final BufferedReader stdIn, final RenderLengthOfLine bottomPaneRenderer)
             throws IOException
     {
         this.bottomPaneRenderer = bottomPaneRenderer;
-        final Node head = new Node();
-        head.next = tail;
-        head.row = -1;
-        tail.prev = head;
         this.screen = screen;
-        this.stdIn = stdIn;
-        currentLineNode = head;
-        final Optional<Node> node = nextNode(currentLineNode);
-        node.orElseThrow(() -> new IllegalStateException("Couldn't find first line."));
-        currentLineNode = node.get();
+        terminalLines = new TerminalLines(stdIn);
         redrawScreen(true);
     }
 
@@ -51,12 +39,12 @@ final class LogViewer implements TerminalResizeListener
         final int bottomRowCount;
         if (biasTop)
         {
-            topRowCount = Math.min(currentLineNode.row, biggerPercent);
+            topRowCount = Math.min(terminalLines.getCurrentLineNode().getRow(), biggerPercent);
             bottomRowCount = topPaneRowCount - topRowCount + 1;
         }
         else
         {
-            bottomRowCount = Math.min(currentLineNode.row, biggerPercent);
+            bottomRowCount = Math.min(terminalLines.getCurrentLineNode().getRow(), biggerPercent);
             topRowCount = topPaneRowCount - bottomRowCount + 1;
         }
         LOGGER.debug("Top row count: {}; Bottom row count: {}; Number of rows: {}; Assumed number: {}",
@@ -64,35 +52,35 @@ final class LogViewer implements TerminalResizeListener
                      bottomRowCount,
                      topPaneRowCount,
                      topRowCount + bottomRowCount + 1);
-        topRowNode = this.currentLineNode;
-        bottomRowNode = this.currentLineNode;
+        terminalLines.setTopLineNode(terminalLines.getCurrentLineNode());
+        terminalLines.setBottomLineNode(terminalLines.getCurrentLineNode());
         for (int i = topRowCount - 1; i >= 0; i--)
         {
-            final Optional<Node> prev = prevNode(topRowNode);
+            final Optional<TerminalLines.Node> prev = terminalLines.prevNode(terminalLines.getTopLineNode());
             if (!prev.isPresent())
             {
                 screen.putString(i, truncateLine(""));
                 continue;
             }
-            topRowNode = prev.get();
+            terminalLines.setTopLineNode(prev.get());
             LOGGER.debug("Drawing top row: {}", i);
-            screen.putString(i, truncateLine(topRowNode.line));
+            screen.putString(i, truncateLine(terminalLines.getTopLineNode().getLine()));
         }
-        screen.putString(topRowCount, truncateLine(currentLineNode.line));
+        screen.putString(topRowCount, truncateLine(terminalLines.getCurrentLineNode().getLine()));
         screen.setCursorPosition(new TerminalPosition(0, topRowCount));
         for (int i = 0; i < bottomRowCount; i++)
         {
-            final Optional<Node> next = nextNode(bottomRowNode);
+            final Optional<TerminalLines.Node> next = terminalLines.nextNode(terminalLines.getBottomLineNode());
             if (!next.isPresent())
             {
                 screen.putString(topRowCount + 1 + i, truncateLine(""));
                 continue;
             }
-            bottomRowNode = next.get();
+            terminalLines.setBottomLineNode(next.get());
             LOGGER.debug("Drawing bottom row: {}", i);
-            screen.putString(topRowCount + 1 + i, truncateLine(bottomRowNode.line));
+            screen.putString(topRowCount + 1 + i, truncateLine(terminalLines.getBottomLineNode().getLine()));
         }
-        renderBottomPane(currentLineNode.line);
+        renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
     }
 
@@ -106,95 +94,48 @@ final class LogViewer implements TerminalResizeListener
         return screen.getTerminalSize().getColumns();
     }
 
-    private Optional<Node> nextNode(final Node node)
-    {
-        if (node.next.line == null)
-        {
-            // We need to load more data
-            final String line;
-            try
-            {
-                line = this.stdIn.readLine();
-            }
-            catch (final IOException e)
-            {
-                return Optional.empty();
-            }
-            if (line == null)
-            {
-                // We've no more strings to read
-                return Optional.empty();
-            }
-
-            addLast(line);
-        }
-
-        return Optional.ofNullable(node.next);
-    }
-
-    private Optional<Node> prevNode(final Node node)
-    {
-        if (node.prev.line == null)
-        {
-            return Optional.empty();
-        }
-
-        return Optional.of(node.prev);
-    }
-
     void onDownArrow() throws IOException
     {
-        final Optional<Node> node = nextNode(currentLineNode);
-        if (! node.isPresent())
+        final Optional<TerminalLines.Node> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
+        if (!node.isPresent())
         {
             screen.bell();
             screen.refresh();
             return;
         }
-        if (currentLineNode.row == bottomRowNode.row)
+        if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
         {
             redrawScreen(true);
         }
         else
         {
-            currentLineNode = node.get();
+            terminalLines.setCurrentLineNode(node.get());
             screen.setCursorPosition(new TerminalPosition(0, screen.getCursorPosition().getRow() + 1));
-            renderBottomPane(currentLineNode.line);
+            renderBottomPane(terminalLines.getCurrentLineNode().getLine());
             screen.refresh();
         }
     }
 
     void onUpArrow() throws IOException
     {
-        final Optional<Node> node = prevNode(currentLineNode);
-        if (! node.isPresent())
+        final Optional<TerminalLines.Node> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
+        if (!node.isPresent())
         {
             screen.bell();
             screen.refresh();
             return;
         }
-        if (currentLineNode.row == topRowNode.row)
+        if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getTopLineNode().getRow())
         {
             redrawScreen(false);
         }
         else
         {
-            currentLineNode = node.get();
+            terminalLines.setCurrentLineNode(node.get());
             screen.setCursorPosition(new TerminalPosition(0, screen.getCursorPosition().getRow() - 1));
-            renderBottomPane(currentLineNode.line);
+            renderBottomPane(terminalLines.getCurrentLineNode().getLine());
             screen.refresh();
         }
-    }
-
-    private void addLast(final String line)
-    {
-        final Node latest = new Node();
-        tail.prev.next = latest;
-        latest.prev = tail.prev;
-        latest.row = tail.prev.row + 1;
-        latest.next = tail;
-        tail.prev = latest;
-        latest.line = line;
     }
 
     private void renderBottomPane(final String currentLine)
@@ -244,20 +185,4 @@ final class LogViewer implements TerminalResizeListener
         }
     }
 
-    private static final class Node
-    {
-        @Override
-        public String toString()
-        {
-            return "Node{" +
-                   "line='" + line + '\'' +
-                   ", row=" + row +
-                   '}';
-        }
-
-        private Node next;
-        private Node prev;
-        private String line;
-        private int row;
-    }
 }
