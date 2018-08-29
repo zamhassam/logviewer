@@ -47,4 +47,9 @@ final class LogViewerScreen
     {
         terminal.bell();
     }
+
+    void doResize()
+    {
+        screen.doResizeIfNecessary();
+    }
 }

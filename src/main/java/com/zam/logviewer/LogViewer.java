@@ -236,6 +236,7 @@ final class LogViewer implements TerminalResizeListener
         try
         {
             redrawScreen(true);
+            screen.doResize();
         }
         catch (final IOException e)
         {
