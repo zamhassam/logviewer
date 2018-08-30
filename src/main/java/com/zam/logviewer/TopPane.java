@@ -113,7 +113,6 @@ final class TopPane implements TerminalResizeListener
                 continue;
             }
             terminalLines.setTopLineNode(prev.get());
-            LOGGER.debug("Drawing top row: {}", i);
             screen.putString(i, terminalLines.getTopLineNode().getLine());
         }
         screen.putString(topRowCount, terminalLines.getCurrentLineNode().getLine());
@@ -127,7 +126,6 @@ final class TopPane implements TerminalResizeListener
                 continue;
             }
             terminalLines.setBottomLineNode(next.get());
-            LOGGER.debug("Drawing bottom row: {}", i);
             screen.putString(topRowCount + 1 + i, terminalLines.getBottomLineNode().getLine());
         }
         renderBottomPane(terminalLines.getCurrentLineNode().getLine());
