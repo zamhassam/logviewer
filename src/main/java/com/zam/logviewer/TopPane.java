@@ -1,98 +1,68 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.TerminalPosition;
-import com.googlecode.lanterna.TerminalSize;
-import com.googlecode.lanterna.terminal.Terminal;
-import com.googlecode.lanterna.terminal.TerminalResizeListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-final class TopPane implements TerminalResizeListener
+final class TopPane extends Pane
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
-    private final RenderLengthOfLine bottomPaneRenderer;
     private final LogViewerScreen screen;
+    private final FIXRenderer bottomPaneRenderer;
     private final TerminalLines terminalLines;
-    private TerminalPosition lastKnownPosition;
 
-    TopPane(final LogViewerScreen screen, final BufferedReader stdIn, final RenderLengthOfLine bottomPaneRenderer)
+    TopPane(final LogViewerScreen screen,
+            final FIXRenderer bottomPaneRenderer, final TerminalLines terminalLines)
             throws IOException
     {
-        this.bottomPaneRenderer = bottomPaneRenderer;
+        super(screen, terminalLines);
         this.screen = screen;
-        terminalLines = new TerminalLines(stdIn);
-        redrawScreen(true);
+        this.bottomPaneRenderer = bottomPaneRenderer;
+        this.terminalLines = terminalLines;
+        redrawScreen();
     }
 
+    @Override
     void onDownArrow() throws IOException
     {
-        final Optional<TerminalLines.Node> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
-        if (!node.isPresent())
-        {
-            screen.bell();
-            screen.refresh();
-            return;
-        }
-        if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
-        {
-            redrawScreen(true);
-        }
-        else
-        {
-            terminalLines.setCurrentLineNode(node.get());
-            setCursorPosition(new TerminalPosition(0, screen.getCursorRow() + 1));
-            renderBottomPane(terminalLines.getCurrentLineNode().getLine());
-            screen.refresh();
-        }
+        super.onDownArrow();
+        renderBottomPane(terminalLines.getCurrentLineNode().getLine());
+        screen.refresh();
     }
 
+    @Override
     void onUpArrow() throws IOException
     {
-        final Optional<TerminalLines.Node> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
-        if (!node.isPresent())
+        super.onUpArrow();
+        renderBottomPane(terminalLines.getCurrentLineNode().getLine());
+        screen.refresh();
+    }
+
+    @Override
+    void redrawScreen() throws IOException
+    {
+        final boolean giveTopMoreLines;
+        if (terminalLines.getTopLineNode() == null ||
+            terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
         {
-            screen.bell();
-            screen.refresh();
-            return;
-        }
-        if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getTopLineNode().getRow())
-        {
-            redrawScreen(false);
+            giveTopMoreLines = true;
         }
         else
         {
-            terminalLines.setCurrentLineNode(node.get());
-            setCursorPosition(new TerminalPosition(0, screen.getCursorRow() - 1));
-            renderBottomPane(terminalLines.getCurrentLineNode().getLine());
-            screen.refresh();
+            giveTopMoreLines = false;
         }
-    }
 
-    void onSelected()
-    {
-        setCursorPosition(lastKnownPosition);
-    }
-
-    private void setCursorPosition(final TerminalPosition position)
-    {
-        lastKnownPosition = position;
-        screen.setCursorPosition(position);
-    }
-
-    private void redrawScreen(final boolean biasTop) throws IOException
-    {
         final int topPaneRowCount = screen.getTopPaneRowCount();
         final int biggerPercent = (int) (topPaneRowCount * PERCENT_OF_SCREEN_ABOVE);
         final int topRowCount;
         final int bottomRowCount;
-        if (biasTop)
+        if (giveTopMoreLines)
         {
             topRowCount = Math.min(terminalLines.getCurrentLineNode().getRow(), biggerPercent);
             bottomRowCount = topPaneRowCount - topRowCount + 1;
@@ -151,20 +121,6 @@ final class TopPane implements TerminalResizeListener
                 message = "";
             }
             screen.putString(rowNum, message);
-        }
-    }
-
-    @Override
-    public void onResized(final Terminal terminal, final TerminalSize newSize)
-    {
-        try
-        {
-            redrawScreen(true);
-            screen.doResize();
-        }
-        catch (final IOException e)
-        {
-            LOGGER.error("Couldn't resize.");
         }
     }
 

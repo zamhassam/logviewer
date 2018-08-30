@@ -105,19 +105,11 @@ final class TerminalLines
 
     static final class Node
     {
-        @Override
-        public String toString()
-        {
-            return "Node{" +
-                   "line='" + getLine() + '\'' +
-                   ", row=" + getRow() +
-                   '}';
-        }
 
         private Node next;
         private Node prev;
-        String line;
-        int row;
+        private String line;
+        private int row;
 
         String getLine()
         {
@@ -137,6 +129,15 @@ final class TerminalLines
         void setRow(final int row)
         {
             this.row = row;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "Node{" +
+                   "line='" + getLine() + '\'' +
+                   ", row=" + getRow() +
+                   '}';
         }
     }
 }

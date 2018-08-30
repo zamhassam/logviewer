@@ -21,12 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class RenderLengthOfLine implements BottomPaneRenderer
+public class FIXRenderer implements BottomPaneRenderer
 {
     private final Map<Integer, String> fields = new HashMap<>();
     private final Map<Integer, Map<String, String>> enums = new HashMap<>();
 
-    public RenderLengthOfLine(final String fixFileLocation)
+    FIXRenderer(final String fixFileLocation)
     {
         try
         {
@@ -70,7 +70,8 @@ public class RenderLengthOfLine implements BottomPaneRenderer
         }
     }
 
-    List<String> renderBottomPaneContents(final String currentLine)
+    @Override
+    public List<String> renderBottomPaneContents(final String currentLine)
     {
         final List<String> rows = new ArrayList<>();
         for (final String keyValue : currentLine.split("\\\\001"))
@@ -111,7 +112,7 @@ public class RenderLengthOfLine implements BottomPaneRenderer
 
     public static void main(final String[] args)
     {
-        final RenderLengthOfLine renderer = new RenderLengthOfLine("src/main/resources/FIX42.xml");
+        final FIXRenderer renderer = new FIXRenderer("src/main/resources/FIX42.xml");
         System.out.println(renderer.enums);
     }
 }

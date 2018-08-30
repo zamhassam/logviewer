@@ -39,12 +39,10 @@ public class Main
             final TopPane
                     topPane =
                     new TopPane(logViewerScreen,
-                                stdIn,
-                                new RenderLengthOfLine("src/main/resources/FIX42.xml"));
+                                new FIXRenderer("src/main/resources/FIX42.xml"), new TerminalLines(stdIn));
             terminal.addResizeListener(topPane);
             while (true)
             {
-                screen.refresh();
                 final KeyStroke keyStroke = screen.readInput();
                 if (keyStroke == null || keyStroke.getKeyType() == null)
                 {
@@ -54,11 +52,9 @@ public class Main
                 {
                     case ArrowDown:
                         topPane.onDownArrow();
-                        //screen.refresh();
                         break;
                     case ArrowUp:
                         topPane.onUpArrow();
-                        //screen.refresh();
                         break;
                     case Escape:
                         return;
@@ -68,6 +64,10 @@ public class Main
         catch (final Exception e)
         {
             LOGGER.fatal("Unexpected error:", e);
+            if (stdIn != null)
+            {
+                stdIn.close();
+            }
         }
         finally
         {
