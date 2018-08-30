@@ -1,5 +1,6 @@
 package com.zam.logviewer;
 
+import com.googlecode.lanterna.TerminalPosition;
 import com.zam.logviewer.terminallines.ListTerminalLines;
 import com.zam.logviewer.terminallines.Node;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +28,7 @@ class BottomPane extends Pane
     void setCurrentLine(final String line) throws IOException
     {
         terminalLines.reset(renderer.renderBottomPaneContents(line));
+        setCursorPosition(new TerminalPosition(0, getBottomPaneOffset()));
         redrawScreen();
     }
 
@@ -60,7 +62,7 @@ class BottomPane extends Pane
         }
         terminalLines.setTopLineNode(terminalLines.getCurrentLineNode());
         terminalLines.setBottomLineNode(terminalLines.getCurrentLineNode());
-        final int bottomPaneOffset = screen.getTopPaneRowCount() + 2;
+        final int bottomPaneOffset = getBottomPaneOffset();
         final int endTopRows = topRowCount - 1 + bottomPaneOffset;
         LOGGER.info("Printing top from {} to {}", bottomPaneOffset, endTopRows);
         for (int i = endTopRows; i >= bottomPaneOffset; i--)
@@ -89,5 +91,10 @@ class BottomPane extends Pane
             screen.putString(i, terminalLines.getBottomLineNode().getLine());
         }
         screen.refresh();
+    }
+
+    private int getBottomPaneOffset()
+    {
+        return screen.getTopPaneRowCount() + 2;
     }
 }

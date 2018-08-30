@@ -67,9 +67,10 @@ public abstract class Pane implements TerminalResizeListener
         }
     }
 
-    void onSelected()
+    void onSelected() throws IOException
     {
         setCursorPosition(lastKnownPosition);
+        screen.refresh();
     }
 
     void setCursorPosition(final TerminalPosition position)

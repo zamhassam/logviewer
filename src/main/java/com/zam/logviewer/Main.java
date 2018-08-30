@@ -49,6 +49,7 @@ public class Main
                                                          new ListTerminalLines(),
                                                          fixRenderer);
             bottomPane.setCurrentLine(terminalLines.getCurrentLineNode().getLine());
+            topPane.onSelected();
             screen.refresh();
             terminal.addResizeListener(topPane);
             while (true)
@@ -63,10 +64,12 @@ public class Main
                     case ArrowDown:
                         topPane.onDownArrow();
                         bottomPane.setCurrentLine(terminalLines.getCurrentLineNode().getLine());
+                        topPane.onSelected();
                         break;
                     case ArrowUp:
                         topPane.onUpArrow();
                         bottomPane.setCurrentLine(terminalLines.getCurrentLineNode().getLine());
+                        topPane.onSelected();
                         break;
                     case Escape:
                         return;
