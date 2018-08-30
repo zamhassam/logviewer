@@ -26,7 +26,7 @@ public class RenderLengthOfLine implements BottomPaneRenderer
     private final Map<Integer, String> fields = new HashMap<>();
     private final Map<Integer, Map<String, String>> enums = new HashMap<>();
 
-    public RenderLengthOfLine(String fixFileLocation)
+    public RenderLengthOfLine(final String fixFileLocation)
     {
         try
         {
@@ -46,13 +46,13 @@ public class RenderLengthOfLine implements BottomPaneRenderer
                     {
                             final String enumName = childNode.getAttributes().getNamedItem("description").getNodeValue();
                             final String enumValue = childNode.getAttributes().getNamedItem("enum").getNodeValue();
-                            Map<String, String> enumMap = enums.computeIfAbsent(number, HashMap::new);
+                            final Map<String, String> enumMap = enums.computeIfAbsent(number, HashMap::new);
                             enumMap.put(enumValue, enumName);
                     });
                 }
             });
         }
-        catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e)
+        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException e)
         {
             e.printStackTrace();
         }
@@ -70,10 +70,10 @@ public class RenderLengthOfLine implements BottomPaneRenderer
         }
     }
 
-    List<String> renderBottomPaneContents(String currentLine)
+    List<String> renderBottomPaneContents(final String currentLine)
     {
         final List<String> rows = new ArrayList<>();
-        for (String keyValue : currentLine.split("\\\\001"))
+        for (final String keyValue : currentLine.split("\\\\001"))
         {
             final String[] keyValSplit = keyValue.split("=");
             if (keyValSplit.length != 2)
@@ -87,7 +87,7 @@ public class RenderLengthOfLine implements BottomPaneRenderer
             {
                 key = Integer.parseInt(keyValSplit[0]);
             }
-            catch (NumberFormatException e)
+            catch (final NumberFormatException e)
             {
                 rows.add(keyValue);
                 continue;
@@ -109,9 +109,9 @@ public class RenderLengthOfLine implements BottomPaneRenderer
         return rows;
     }
 
-    public static void main(String[] args)
+    public static void main(final String[] args)
     {
-        RenderLengthOfLine renderer = new RenderLengthOfLine("src/main/resources/FIX42.xml");
+        final RenderLengthOfLine renderer = new RenderLengthOfLine("src/main/resources/FIX42.xml");
         System.out.println(renderer.enums);
     }
 }

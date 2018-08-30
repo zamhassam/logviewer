@@ -1,7 +1,6 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.TerminalPosition;
-import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.Terminal;
 
@@ -23,14 +22,19 @@ final class LogViewerScreen
         screen.setCursorPosition(position);
     }
 
-    TerminalSize getTerminalSize()
+    int getTopPaneRowCount()
     {
-        return screen.getTerminalSize();
+        return screen.getTerminalSize().getRows() / 2;
     }
 
-    TerminalPosition getCursorPosition()
+    int getBottomPaneRowCount()
     {
-        return screen.getCursorPosition();
+        return screen.getTerminalSize().getRows() - getTopPaneRowCount() - 1;
+    }
+
+    int getCursorRow()
+    {
+        return screen.getCursorPosition().getRow();
     }
 
     void putString(final int row, final String string)

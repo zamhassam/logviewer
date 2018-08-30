@@ -13,17 +13,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-final class LogViewer implements TerminalResizeListener
+final class TopPane implements TerminalResizeListener
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
     private final RenderLengthOfLine bottomPaneRenderer;
     private final LogViewerScreen screen;
     private final TerminalLines terminalLines;
-    private int topPaneRowCount;
     private TerminalPosition lastKnownPosition;
 
-    LogViewer(final LogViewerScreen screen, final BufferedReader stdIn, final RenderLengthOfLine bottomPaneRenderer)
+    TopPane(final LogViewerScreen screen, final BufferedReader stdIn, final RenderLengthOfLine bottomPaneRenderer)
             throws IOException
     {
         this.bottomPaneRenderer = bottomPaneRenderer;
@@ -48,7 +47,7 @@ final class LogViewer implements TerminalResizeListener
         else
         {
             terminalLines.setCurrentLineNode(node.get());
-            setCursorPosition(new TerminalPosition(0, screen.getCursorPosition().getRow() + 1));
+            setCursorPosition(new TerminalPosition(0, screen.getCursorRow() + 1));
             renderBottomPane(terminalLines.getCurrentLineNode().getLine());
             screen.refresh();
         }
@@ -70,7 +69,7 @@ final class LogViewer implements TerminalResizeListener
         else
         {
             terminalLines.setCurrentLineNode(node.get());
-            setCursorPosition(new TerminalPosition(0, screen.getCursorPosition().getRow() - 1));
+            setCursorPosition(new TerminalPosition(0, screen.getCursorRow() - 1));
             renderBottomPane(terminalLines.getCurrentLineNode().getLine());
             screen.refresh();
         }
@@ -89,7 +88,7 @@ final class LogViewer implements TerminalResizeListener
 
     private void redrawScreen(final boolean biasTop) throws IOException
     {
-        topPaneRowCount = screen.getTerminalSize().getRows() / 2;
+        final int topPaneRowCount = screen.getTopPaneRowCount();
         final int biggerPercent = (int) (topPaneRowCount * PERCENT_OF_SCREEN_ABOVE);
         final int topRowCount;
         final int bottomRowCount;
@@ -103,11 +102,6 @@ final class LogViewer implements TerminalResizeListener
             bottomRowCount = Math.min(terminalLines.getCurrentLineNode().getRow(), biggerPercent);
             topRowCount = topPaneRowCount - bottomRowCount + 1;
         }
-        LOGGER.debug("Top row count: {}; Bottom row count: {}; Number of rows: {}; Assumed number: {}",
-                     topRowCount,
-                     bottomRowCount,
-                     topPaneRowCount,
-                     topRowCount + bottomRowCount + 1);
         terminalLines.setTopLineNode(terminalLines.getCurrentLineNode());
         terminalLines.setBottomLineNode(terminalLines.getCurrentLineNode());
         for (int i = topRowCount - 1; i >= 0; i--)
@@ -140,22 +134,13 @@ final class LogViewer implements TerminalResizeListener
         screen.refresh();
     }
 
-    private int getTopPaneRowCount()
-    {
-        return topPaneRowCount;
-    }
-
-    private int getColCount()
-    {
-        return screen.getTerminalSize().getColumns();
-    }
-
     private void renderBottomPane(final String currentLine)
     {
         final List<String> rows = bottomPaneRenderer.renderBottomPaneContents(currentLine);
         final Iterator<String> rowIter = rows.iterator();
-        for (int rowNum = getTopPaneRowCount() + 2;
-             rowNum < screen.getTerminalSize().getRows();
+        final int renderFrom = screen.getTopPaneRowCount() + 2;
+        for (int rowNum = renderFrom;
+             rowNum < screen.getBottomPaneRowCount() + renderFrom;
              rowNum++)
         {
             final String message;

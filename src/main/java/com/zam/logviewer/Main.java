@@ -36,12 +36,12 @@ public class Main
                 stdIn = new BufferedReader(new FileReader(args[0]));
             }
             final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
-            final LogViewer
-                    logViewer =
-                    new LogViewer(logViewerScreen,
-                                  stdIn,
-                                  new RenderLengthOfLine("src/main/resources/FIX42.xml"));
-            terminal.addResizeListener(logViewer);
+            final TopPane
+                    topPane =
+                    new TopPane(logViewerScreen,
+                                stdIn,
+                                new RenderLengthOfLine("src/main/resources/FIX42.xml"));
+            terminal.addResizeListener(topPane);
             while (true)
             {
                 screen.refresh();
@@ -53,11 +53,11 @@ public class Main
                 switch (keyStroke.getKeyType())
                 {
                     case ArrowDown:
-                        logViewer.onDownArrow();
+                        topPane.onDownArrow();
                         //screen.refresh();
                         break;
                     case ArrowUp:
-                        logViewer.onUpArrow();
+                        topPane.onUpArrow();
                         //screen.refresh();
                         break;
                     case Escape:
