@@ -4,6 +4,8 @@ import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.terminal.TerminalResizeListener;
+import com.zam.logviewer.terminallines.Node;
+import com.zam.logviewer.terminallines.TerminalLines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,7 +27,7 @@ public abstract class Pane implements TerminalResizeListener
 
     void onDownArrow() throws IOException
     {
-        final Optional<TerminalLines.Node> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
+        final Optional<Node> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
         if (!node.isPresent())
         {
             screen.bell();
@@ -46,7 +48,7 @@ public abstract class Pane implements TerminalResizeListener
 
     void onUpArrow() throws IOException
     {
-        final Optional<TerminalLines.Node> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
+        final Optional<Node> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
         if (!node.isPresent())
         {
             screen.bell();

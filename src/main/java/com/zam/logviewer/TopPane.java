@@ -1,6 +1,8 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.TerminalPosition;
+import com.zam.logviewer.terminallines.Node;
+import com.zam.logviewer.terminallines.TerminalLines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +20,8 @@ final class TopPane extends Pane
     private final TerminalLines terminalLines;
 
     TopPane(final LogViewerScreen screen,
-            final FIXRenderer bottomPaneRenderer, final TerminalLines terminalLines)
+            final FIXRenderer bottomPaneRenderer,
+            final TerminalLines terminalLines)
             throws IOException
     {
         super(screen, terminalLines);
@@ -32,7 +35,7 @@ final class TopPane extends Pane
     void onDownArrow() throws IOException
     {
         super.onDownArrow();
-        renderBottomPane(terminalLines.getCurrentLineNode().getLine());
+//      renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
     }
 
@@ -40,7 +43,7 @@ final class TopPane extends Pane
     void onUpArrow() throws IOException
     {
         super.onUpArrow();
-        renderBottomPane(terminalLines.getCurrentLineNode().getLine());
+//      renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
     }
 
@@ -76,7 +79,7 @@ final class TopPane extends Pane
         terminalLines.setBottomLineNode(terminalLines.getCurrentLineNode());
         for (int i = topRowCount - 1; i >= 0; i--)
         {
-            final Optional<TerminalLines.Node> prev = terminalLines.prevNode(terminalLines.getTopLineNode());
+            final Optional<Node> prev = terminalLines.prevNode(terminalLines.getTopLineNode());
             if (!prev.isPresent())
             {
                 screen.putString(i, "");
@@ -89,7 +92,7 @@ final class TopPane extends Pane
         setCursorPosition(new TerminalPosition(0, topRowCount));
         for (int i = 0; i < bottomRowCount; i++)
         {
-            final Optional<TerminalLines.Node> next = terminalLines.nextNode(terminalLines.getBottomLineNode());
+            final Optional<Node> next = terminalLines.nextNode(terminalLines.getBottomLineNode());
             if (!next.isPresent())
             {
                 screen.putString(topRowCount + 1 + i, "");
@@ -98,7 +101,7 @@ final class TopPane extends Pane
             terminalLines.setBottomLineNode(next.get());
             screen.putString(topRowCount + 1 + i, terminalLines.getBottomLineNode().getLine());
         }
-        renderBottomPane(terminalLines.getCurrentLineNode().getLine());
+        //renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
     }
 
