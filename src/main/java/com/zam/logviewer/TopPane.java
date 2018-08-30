@@ -7,8 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 
 final class TopPane extends Pane
@@ -16,17 +14,14 @@ final class TopPane extends Pane
     private static final Logger LOGGER = LogManager.getLogger();
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
     private final LogViewerScreen screen;
-    private final FIXRenderer bottomPaneRenderer;
     private final TerminalLines terminalLines;
 
     TopPane(final LogViewerScreen screen,
-            final FIXRenderer bottomPaneRenderer,
             final TerminalLines terminalLines)
             throws IOException
     {
         super(screen, terminalLines);
         this.screen = screen;
-        this.bottomPaneRenderer = bottomPaneRenderer;
         this.terminalLines = terminalLines;
         redrawScreen();
     }
@@ -35,7 +30,6 @@ final class TopPane extends Pane
     void onDownArrow() throws IOException
     {
         super.onDownArrow();
-//      renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
     }
 
@@ -43,7 +37,6 @@ final class TopPane extends Pane
     void onUpArrow() throws IOException
     {
         super.onUpArrow();
-//      renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
     }
 
@@ -101,30 +94,7 @@ final class TopPane extends Pane
             terminalLines.setBottomLineNode(next.get());
             screen.putString(topRowCount + 1 + i, terminalLines.getBottomLineNode().getLine());
         }
-        //renderBottomPane(terminalLines.getCurrentLineNode().getLine());
         screen.refresh();
-    }
-
-    private void renderBottomPane(final String currentLine)
-    {
-        final List<String> rows = bottomPaneRenderer.renderBottomPaneContents(currentLine);
-        final Iterator<String> rowIter = rows.iterator();
-        final int renderFrom = screen.getTopPaneRowCount() + 2;
-        for (int rowNum = renderFrom;
-             rowNum < screen.getBottomPaneRowCount() + renderFrom;
-             rowNum++)
-        {
-            final String message;
-            if (rowIter.hasNext())
-            {
-                message = rowIter.next();
-            }
-            else
-            {
-                message = "";
-            }
-            screen.putString(rowNum, message);
-        }
     }
 
 }

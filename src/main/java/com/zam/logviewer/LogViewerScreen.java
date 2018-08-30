@@ -29,7 +29,12 @@ final class LogViewerScreen
 
     int getBottomPaneRowCount()
     {
-        return screen.getTerminalSize().getRows() - getTopPaneRowCount() - 1;
+        return screen.getTerminalSize().getRows() - getTopPaneRowCount();
+    }
+
+    int getBottomPaneRowOffset()
+    {
+        return getTopPaneRowCount() + 3;
     }
 
     int getCursorRow()
@@ -39,7 +44,8 @@ final class LogViewerScreen
 
     void putString(final int row, final String string)
     {
-        screen.newTextGraphics().putString(0, row, truncatePadLine(string));
+        final String cleaned = string.replace('\001', '|');
+        screen.newTextGraphics().putString(0, row, truncatePadLine(cleaned));
     }
 
     void refresh() throws IOException

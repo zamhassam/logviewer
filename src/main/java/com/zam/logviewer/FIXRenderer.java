@@ -74,7 +74,7 @@ public class FIXRenderer implements BottomPaneRenderer
     public List<String> renderBottomPaneContents(final String currentLine)
     {
         final List<String> rows = new ArrayList<>();
-        for (final String keyValue : currentLine.split("\\\\001"))
+        for (final String keyValue : currentLine.split("[\\001|]"))
         {
             final String[] keyValSplit = keyValue.split("=");
             if (keyValSplit.length != 2)

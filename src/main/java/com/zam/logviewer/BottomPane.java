@@ -28,7 +28,7 @@ class BottomPane extends Pane
     void setCurrentLine(final String line) throws IOException
     {
         terminalLines.reset(renderer.renderBottomPaneContents(line));
-        setCursorPosition(new TerminalPosition(0, getBottomPaneOffset()));
+        setCursorPosition(new TerminalPosition(0, screen.getBottomPaneRowOffset()));
         redrawScreen();
     }
 
@@ -62,7 +62,7 @@ class BottomPane extends Pane
         }
         terminalLines.setTopLineNode(terminalLines.getCurrentLineNode());
         terminalLines.setBottomLineNode(terminalLines.getCurrentLineNode());
-        final int bottomPaneOffset = getBottomPaneOffset();
+        final int bottomPaneOffset = screen.getBottomPaneRowOffset();
         final int endTopRows = topRowCount - 1 + bottomPaneOffset;
         LOGGER.info("Printing top from {} to {}", bottomPaneOffset, endTopRows);
         for (int i = endTopRows; i >= bottomPaneOffset; i--)

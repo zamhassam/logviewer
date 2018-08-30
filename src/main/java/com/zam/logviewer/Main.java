@@ -43,7 +43,6 @@ public class Main
             final TopPane
                     topPane =
                     new TopPane(logViewerScreen,
-                                fixRenderer,
                                 terminalLines);
             final BottomPane bottomPane = new BottomPane(logViewerScreen,
                                                          new ListTerminalLines(),
