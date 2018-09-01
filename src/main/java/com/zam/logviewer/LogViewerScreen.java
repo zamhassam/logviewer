@@ -10,6 +10,7 @@ public final class LogViewerScreen
 {
     private final Terminal terminal;
     private final Screen screen;
+    private int rowSplitOffset;
 
     LogViewerScreen(final Terminal terminal, final Screen screen)
     {
@@ -17,14 +18,30 @@ public final class LogViewerScreen
         this.screen = screen;
     }
 
-    public void setCursorPosition(final TerminalPosition position)
+    public int getRowSplitOffset()
     {
-        screen.setCursorPosition(position);
+        return rowSplitOffset;
+    }
+
+    public void setRowSplitOffset(final int rowSplitOffset)
+    {
+
+        final int prevRowSplitOffset = this.rowSplitOffset;
+        this.rowSplitOffset = rowSplitOffset;
+        if (getTopPaneRowCount() < 1 || getBottomPaneRowCount() < 1)
+        {
+            this.rowSplitOffset = prevRowSplitOffset;
+        }
+    }
+
+    public void setCursorPosition(final int row)
+    {
+        screen.setCursorPosition(new TerminalPosition(0, row));
     }
 
     public int getTopPaneRowCount()
     {
-        return screen.getTerminalSize().getRows() / 2;
+        return (screen.getTerminalSize().getRows() / 2) + rowSplitOffset;
     }
 
     public int getBottomPaneRowCount()
@@ -32,9 +49,14 @@ public final class LogViewerScreen
         return screen.getTerminalSize().getRows() - getTopPaneRowCount();
     }
 
+    public int getMiddlePaneRowOffset()
+    {
+        return getTopPaneRowCount() + 2;
+    }
+
     public int getBottomPaneRowOffset()
     {
-        return getTopPaneRowCount() + 3;
+        return getMiddlePaneRowOffset() + 1;
     }
 
     public int getCursorRow()

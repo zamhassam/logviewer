@@ -26,7 +26,7 @@ public class FIXRenderer implements BottomPaneRenderer
     private final Map<Integer, String> fields = new HashMap<>();
     private final Map<Integer, Map<String, String>> enums = new HashMap<>();
 
-    FIXRenderer(final String fixFileLocation)
+    public FIXRenderer(final String fixFileLocation)
     {
         try
         {

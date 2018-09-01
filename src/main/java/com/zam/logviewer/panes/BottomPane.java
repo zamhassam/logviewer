@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Optional;
 
-public class BottomPane extends Pane
+public class BottomPane extends AbstractPane
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
@@ -32,7 +32,7 @@ public class BottomPane extends Pane
     public void setCurrentLine(final String line) throws IOException
     {
         terminalLines.reset(renderer.renderBottomPaneContents(line));
-        setCursorPosition(new TerminalPosition(0, screen.getBottomPaneRowOffset()));
+        setCursorPosition(screen.getBottomPaneRowOffset());
         redrawScreen();
     }
 
@@ -95,10 +95,5 @@ public class BottomPane extends Pane
             screen.putString(i, terminalLines.getBottomLineNode().getLine());
         }
         screen.refresh();
-    }
-
-    private int getBottomPaneOffset()
-    {
-        return screen.getTopPaneRowCount() + 2;
     }
 }

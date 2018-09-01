@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Optional;
 
-public final class TopPane extends Pane
+public final class TopPane extends AbstractPane
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
@@ -83,7 +83,7 @@ public final class TopPane extends Pane
             screen.putString(i, terminalLines.getTopLineNode().getLine());
         }
         screen.putString(topRowCount, terminalLines.getCurrentLineNode().getLine());
-        setCursorPosition(new TerminalPosition(0, topRowCount));
+        setCursorPosition(topRowCount);
         for (int i = 0; i < bottomRowCount; i++)
         {
             final Optional<Node> next = terminalLines.nextNode(terminalLines.getBottomLineNode());
