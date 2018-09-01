@@ -87,7 +87,7 @@ public class Main
                         else if (selectedPane == resizePane)
                         {
                             shouldExit =
-                                    onKeyTypeResizePane(keyStroke.getKeyType(), topPane, bottomPane, terminalLines);
+                                    onKeyTypeResizePane(keyStroke.getKeyType(), topPane, resizePane, bottomPane, terminalLines);
                         }
                         else
                         {
@@ -144,12 +144,25 @@ public class Main
 
     private static boolean onKeyTypeResizePane(final KeyType keyType,
                                                final Pane topPane,
+                                               final ResizePane resizePane,
                                                final BottomPane bottomPane,
                                                final TerminalLines terminalLines)
             throws IOException
     {
         switch (keyType)
         {
+            case ArrowDown:
+                resizePane.onDownArrow();
+                topPane.redrawScreen();
+                bottomPane.redrawScreen();
+                resizePane.onSelected();
+                break;
+            case ArrowUp:
+                resizePane.onUpArrow();
+                topPane.redrawScreen();
+                bottomPane.redrawScreen();
+                resizePane.onSelected();
+                break;
             case Escape:
                 return true;
         }
@@ -164,6 +177,14 @@ public class Main
     {
         switch (keyType)
         {
+            case ArrowDown:
+                bottomPane.onDownArrow();
+                bottomPane.onSelected();
+                break;
+            case ArrowUp:
+                bottomPane.onUpArrow();
+                bottomPane.onSelected();
+                break;
             case Escape:
                 return true;
         }

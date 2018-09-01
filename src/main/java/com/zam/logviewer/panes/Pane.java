@@ -14,4 +14,6 @@ public interface Pane
     void onSelected() throws IOException;
 
     void onResized(Terminal terminal, TerminalSize newSize);
+
+    void redrawScreen() throws IOException;
 }

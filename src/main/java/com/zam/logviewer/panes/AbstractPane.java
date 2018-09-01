@@ -14,6 +14,7 @@ import java.util.Optional;
 
 public abstract class AbstractPane implements TerminalResizeListener, Pane
 {
+    private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
     private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
     private final TerminalLines terminalLines;
@@ -82,7 +83,77 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
         screen.setCursorPosition(row);
     }
 
-    abstract void redrawScreen() throws IOException;
+    @Override
+    public void redrawScreen() throws IOException
+    {
+        final boolean giveTopMoreLines;
+        if (terminalLines.getTopLineNode() == null ||
+            terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
+        {
+            giveTopMoreLines = true;
+        }
+        else
+        {
+            giveTopMoreLines = false;
+        }
+
+        final int totalRowCount = getLastRow() - getFirstRow();
+        final int biggerPercent = (int) (totalRowCount * PERCENT_OF_SCREEN_ABOVE);
+        final int topSectionRowCount;
+        final int selectedRowCount;
+        final int bottomSectionRowCount;
+        if (giveTopMoreLines)
+        {
+            topSectionRowCount = Math.min(terminalLines.getCurrentLineNode().getRow(), biggerPercent);
+        }
+        else
+        {
+            bottomSectionRowCount = getLastRow() - Math.min(terminalLines.getCurrentLineNode().getRow(), biggerPercent);
+            selectedRowCount = 1;
+            topSectionRowCount = getLastRow() + 1 - selectedRowCount - bottomSectionRowCount;
+        }
+
+        Node cur = terminalLines.getCurrentLineNode();
+        terminalLines.setTopLineNode(cur);
+        for (int i = 0; i < topSectionRowCount; i++)
+        {
+            final Optional<Node> prev = terminalLines.prevNode(cur);
+            if (! prev.isPresent())
+            {
+                break;
+            }
+            terminalLines.setTopLineNode(prev.get());
+            cur = prev.get();
+        }
+
+        cur = terminalLines.getTopLineNode();
+        int i;
+        boolean writeBlank = false;
+        for (i = getFirstRow(); i <= getLastRow(); i++)
+        {
+            if (writeBlank)
+            {
+                screen.putString(i, "");
+                continue;
+            }
+            if (cur == terminalLines.getCurrentLineNode())
+            {
+                setCursorPosition(i);
+            }
+            screen.putString(i, cur.getLine());
+            terminalLines.setBottomLineNode(cur);
+            final Optional<Node> next = terminalLines.nextNode(cur);
+            if (! next.isPresent())
+            {
+                writeBlank = true;
+            }
+            else
+            {
+                cur = next.get();
+            }
+        }
+        screen.refresh();
+    }
 
     @Override
     public void onResized(final Terminal terminal, final TerminalSize newSize)
@@ -97,4 +168,8 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
             LOGGER.error("Couldn't resize.");
         }
     }
+
+    abstract int getFirstRow();
+
+    abstract int getLastRow();
 }

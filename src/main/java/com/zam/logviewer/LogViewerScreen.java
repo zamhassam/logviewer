@@ -39,12 +39,37 @@ public final class LogViewerScreen
         screen.setCursorPosition(new TerminalPosition(0, row));
     }
 
-    public int getTopPaneRowCount()
+    public int getFirstRowOfTopPane()
+    {
+        return 0;
+    }
+
+    public int getLastRowOfTopPane()
+    {
+        return getFirstRowOfTopPane() + getTopPaneRowCount() - 1;
+    }
+
+    public int getRowOfMiddlePane()
+    {
+        return getLastRowOfTopPane() + 1;
+    }
+
+    public int getFirstRowOfBottomPane()
+    {
+        return getRowOfMiddlePane() + 1;
+    }
+
+    public int getLastRowOfBottomPane()
+    {
+        return screen.getTerminalSize().getRows() - 1;
+    }
+
+    private int getTopPaneRowCount()
     {
         return (screen.getTerminalSize().getRows() / 2) + rowSplitOffset;
     }
 
-    public int getBottomPaneRowCount()
+    private int getBottomPaneRowCount()
     {
         return screen.getTerminalSize().getRows() - getTopPaneRowCount();
     }
