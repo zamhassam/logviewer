@@ -1,11 +1,11 @@
 package com.zam.logviewer.terminallines;
 
-final class LinkedList
+final class LinkedList<UnderlyingData>
 {
-    private final Node tail = new Node();
-    private final Node head = new Node();
+    private final Node<UnderlyingData> tail = new Node<>();
+    private final Node<UnderlyingData> head = new Node<>();
 
-    Node getHead()
+    Node<UnderlyingData> getHead()
     {
         return head;
     }
@@ -17,15 +17,16 @@ final class LinkedList
         tail.setPrev(head);
     }
 
-    void addLast(final String line)
+    void addLast(final String renderedData, final UnderlyingData originalUnderlyingData)
     {
-        final Node latest = new Node();
+        final Node<UnderlyingData> latest = new Node<>();
         tail.getPrev().setNext(latest);
         latest.setPrev(tail.getPrev());
         latest.setRow(tail.getPrev().getRow() + 1);
         latest.setNext(tail);
         tail.setPrev(latest);
-        latest.setLine(line);
+        latest.setRenderedData(renderedData);
+        latest.setOriginalUnderlyingData(originalUnderlyingData);
     }
 
 }

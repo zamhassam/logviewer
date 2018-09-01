@@ -12,15 +12,15 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Optional;
 
-public abstract class AbstractPane implements TerminalResizeListener, Pane
+public abstract class AbstractPane<UnderlyingData> implements TerminalResizeListener, Pane
 {
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
     private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
-    private final TerminalLines terminalLines;
+    private final TerminalLines<UnderlyingData> terminalLines;
     private int lastKnownRow;
 
-    AbstractPane(final LogViewerScreen screen, final TerminalLines terminalLines)
+    AbstractPane(final LogViewerScreen screen, final TerminalLines<UnderlyingData> terminalLines)
     {
         this.screen = screen;
         this.terminalLines = terminalLines;
@@ -29,7 +29,7 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
     @Override
     public void onDownArrow() throws IOException
     {
-        final Optional<Node> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
+        final Optional<Node<UnderlyingData>> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
         if (!node.isPresent())
         {
             screen.bell();
@@ -51,7 +51,7 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
     @Override
     public void onUpArrow() throws IOException
     {
-        final Optional<Node> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
+        final Optional<Node<UnderlyingData>> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
         if (!node.isPresent())
         {
             screen.bell();
@@ -87,15 +87,8 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
     public void redrawScreen() throws IOException
     {
         final boolean giveTopMoreLines;
-        if (terminalLines.getTopLineNode() == null ||
-            terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
-        {
-            giveTopMoreLines = true;
-        }
-        else
-        {
-            giveTopMoreLines = false;
-        }
+        giveTopMoreLines = terminalLines.getTopLineNode() == null ||
+                           terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow();
 
         final int totalRowCount = getLastRow() - getFirstRow();
         final int biggerPercent = (int) (totalRowCount * PERCENT_OF_SCREEN_ABOVE);
@@ -113,11 +106,11 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
             topSectionRowCount = getLastRow() + 1 - selectedRowCount - bottomSectionRowCount;
         }
 
-        Node cur = terminalLines.getCurrentLineNode();
+        Node<UnderlyingData> cur = terminalLines.getCurrentLineNode();
         terminalLines.setTopLineNode(cur);
         for (int i = 0; i < topSectionRowCount; i++)
         {
-            final Optional<Node> prev = terminalLines.prevNode(cur);
+            final Optional<Node<UnderlyingData>> prev = terminalLines.prevNode(cur);
             if (! prev.isPresent())
             {
                 break;
@@ -140,9 +133,9 @@ public abstract class AbstractPane implements TerminalResizeListener, Pane
             {
                 setCursorPosition(i);
             }
-            screen.putString(i, cur.getLine());
+            screen.putString(i, cur.getRenderedData());
             terminalLines.setBottomLineNode(cur);
-            final Optional<Node> next = terminalLines.nextNode(cur);
+            final Optional<Node<UnderlyingData>> next = terminalLines.nextNode(cur);
             if (! next.isPresent())
             {
                 writeBlank = true;

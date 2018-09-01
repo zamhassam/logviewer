@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class FIXRenderer implements BottomPaneRenderer
+public class FIXRenderer implements BottomPaneRenderer<String>
 {
     private final Map<Integer, String> fields = new HashMap<>();
     private final Map<Integer, Map<String, String>> enums = new HashMap<>();
@@ -71,10 +71,10 @@ public class FIXRenderer implements BottomPaneRenderer
     }
 
     @Override
-    public List<String> renderBottomPaneContents(final String currentLine)
+    public List<String> renderBottomPaneContents(final String fixMsg)
     {
         final List<String> rows = new ArrayList<>();
-        for (final String keyValue : currentLine.split("[\\001|]"))
+        for (final String keyValue : fixMsg.split("[\\001|]"))
         {
             final String[] keyValSplit = keyValue.split("=");
             if (keyValSplit.length != 2)
@@ -108,11 +108,5 @@ public class FIXRenderer implements BottomPaneRenderer
             rows.add(keyRepr + "[" + keyValSplit[0] + "] = " + val);
         }
         return rows;
-    }
-
-    public static void main(final String[] args)
-    {
-        final FIXRenderer renderer = new FIXRenderer("src/main/resources/FIX42.xml");
-        System.out.println(renderer.enums);
     }
 }

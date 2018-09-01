@@ -1,40 +1,51 @@
 package com.zam.logviewer.terminallines;
 
-public final class Node
+public final class Node<UnderlyingData>
 {
-    private Node next;
-    private Node prev;
-    private String line;
+    private Node<UnderlyingData> next;
+    private Node<UnderlyingData> prev;
+    private String renderedData;
+    private UnderlyingData originalUnderlyingData;
     private int row;
 
-    Node getNext()
+    Node<UnderlyingData> getNext()
     {
         return next;
     }
 
-    void setNext(final Node next)
+    void setNext(final Node<UnderlyingData> next)
     {
         this.next = next;
     }
 
-    Node getPrev()
+    Node<UnderlyingData> getPrev()
     {
         return prev;
     }
 
-    void setPrev(final Node prev)
+    void setPrev(final Node<UnderlyingData> prev)
     {
         this.prev = prev;
     }
 
-    public String getLine()
+    public String getRenderedData()
     {
-        return line;
+        return renderedData;
     }
 
-    void setLine(final String line)
+    void setRenderedData(final String renderedData)
     {
-        this.line = line;
+        this.renderedData = renderedData;
+    }
+
+    public UnderlyingData getOriginalUnderlyingData()
+    {
+        return originalUnderlyingData;
+    }
+
+    void setOriginalUnderlyingData(final UnderlyingData originalUnderlyingData)
+    {
+        this.originalUnderlyingData = originalUnderlyingData;
     }
 
     public int getRow()
@@ -51,8 +62,9 @@ public final class Node
     public String toString()
     {
         return "Node{" +
-               "line='" + getLine() + '\'' +
-               ", row=" + getRow() +
+               "renderedData='" + renderedData + '\'' +
+               ", originalUnderlyingData=" + originalUnderlyingData +
+               ", row=" + row +
                '}';
     }
 }

@@ -7,13 +7,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-public final class TopPane extends AbstractPane
+public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
 
     public TopPane(final LogViewerScreen screen,
-                   final TerminalLines terminalLines)
+                   final TerminalLines<UnderlyingData> terminalLines)
             throws IOException
     {
         super(screen, terminalLines);

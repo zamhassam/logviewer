@@ -49,20 +49,21 @@ public class Main
             final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
             final BufferedReaderTerminalLines terminalLines = new BufferedReaderTerminalLines(stdIn);
             final FIXRenderer fixRenderer = new FIXRenderer("src/main/resources/FIX42.xml");
-            final TopPane
+            final TopPane<String>
                     topPane =
-                    new TopPane(logViewerScreen,
+                    new TopPane<>(logViewerScreen,
                                 terminalLines);
-            final BottomPane bottomPane = new BottomPane(logViewerScreen,
-                                                         new ListTerminalLines(),
-                                                         fixRenderer);
+            final BottomPane<String> bottomPane = new BottomPane<>(logViewerScreen,
+                                                                   new ListTerminalLines(),
+                                                                   fixRenderer);
             final ResizePane resizePane = new ResizePane(logViewerScreen);
-            bottomPane.setCurrentLine(terminalLines.getCurrentLineNode().getLine());
+            bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
             final List<Pane> panes = Arrays.asList(topPane, resizePane, bottomPane);
             Pane selectedPane = topPane;
             selectedPane.onSelected();
             screen.refresh();
             terminal.addResizeListener(topPane);
+            terminal.addResizeListener(resizePane);
             terminal.addResizeListener(bottomPane);
             while (true)
             {
@@ -87,12 +88,12 @@ public class Main
                         else if (selectedPane == resizePane)
                         {
                             shouldExit =
-                                    onKeyTypeResizePane(keyStroke.getKeyType(), topPane, resizePane, bottomPane, terminalLines);
+                                    onKeyTypeResizePane(keyStroke.getKeyType(), topPane, resizePane, bottomPane);
                         }
                         else
                         {
                             shouldExit =
-                                    onKeyTypeBottomPane(keyStroke.getKeyType(), topPane, bottomPane, terminalLines);
+                                    onKeyTypeBottomPane(keyStroke.getKeyType(), bottomPane);
                         }
                         if (shouldExit)
                         {
@@ -120,20 +121,20 @@ public class Main
 
     private static boolean onKeyTypeTopPane(final KeyType keyType,
                                             final Pane topPane,
-                                            final BottomPane bottomPane,
-                                            final TerminalLines terminalLines)
+                                            final BottomPane<String> bottomPane,
+                                            final TerminalLines<String> terminalLines)
             throws IOException
     {
         switch (keyType)
         {
             case ArrowDown:
                 topPane.onDownArrow();
-                bottomPane.setCurrentLine(terminalLines.getCurrentLineNode().getLine());
+                bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
                 topPane.onSelected();
                 break;
             case ArrowUp:
                 topPane.onUpArrow();
-                bottomPane.setCurrentLine(terminalLines.getCurrentLineNode().getLine());
+                bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
                 topPane.onSelected();
                 break;
             case Escape:
@@ -145,8 +146,7 @@ public class Main
     private static boolean onKeyTypeResizePane(final KeyType keyType,
                                                final Pane topPane,
                                                final ResizePane resizePane,
-                                               final BottomPane bottomPane,
-                                               final TerminalLines terminalLines)
+                                               final BottomPane bottomPane)
             throws IOException
     {
         switch (keyType)
@@ -170,9 +170,7 @@ public class Main
     }
 
     private static boolean onKeyTypeBottomPane(final KeyType keyType,
-                                               final Pane topPane,
-                                               final BottomPane bottomPane,
-                                               final TerminalLines terminalLines)
+                                               final BottomPane bottomPane)
             throws IOException
     {
         switch (keyType)
