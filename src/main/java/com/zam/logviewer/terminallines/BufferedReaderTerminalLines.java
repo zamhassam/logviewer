@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public class BufferedReaderTerminalLines implements TerminalLines<String>
 {
-    private final BufferedReader stdIn;
+    private final BufferedReader reader;
     private final LinkedList<String> linkedList;
     private Node<String> currentLineNode;
     private Node<String> topLineNode;
@@ -49,10 +49,10 @@ public class BufferedReaderTerminalLines implements TerminalLines<String>
         this.currentLineNode = currentLineNode;
     }
 
-    public BufferedReaderTerminalLines(final BufferedReader stdIn)
+    public BufferedReaderTerminalLines(final BufferedReader reader)
     {
         linkedList = new LinkedList<>();
-        this.stdIn = stdIn;
+        this.reader = reader;
         setCurrentLineNode(linkedList.getHead());
         final Optional<Node<String>> node = nextNode(getCurrentLineNode());
         node.orElseThrow(() -> new IllegalStateException("Couldn't find first line."));
@@ -68,7 +68,7 @@ public class BufferedReaderTerminalLines implements TerminalLines<String>
             final String line;
             try
             {
-                line = this.stdIn.readLine();
+                line = this.reader.readLine();
             }
             catch (final IOException e)
             {

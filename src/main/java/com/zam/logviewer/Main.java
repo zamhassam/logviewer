@@ -33,29 +33,26 @@ public class Main
         final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
 //        defaultTerminalFactory.setForceTextTerminal(true);
         final Terminal terminal = defaultTerminalFactory.createTerminal();
-        BufferedReader stdIn = null;
+        BufferedReader reader = null;
         try
         {
             final Screen screen = new TerminalScreen(terminal);
             screen.startScreen();
             if (args.length == 0)
             {
-                stdIn = new BufferedReader(new InputStreamReader(System.in));
+                reader = new BufferedReader(new InputStreamReader(System.in));
             }
             else
             {
-                stdIn = new BufferedReader(new FileReader(args[0]));
+                reader = new BufferedReader(new FileReader(args[0]));
             }
             final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
-            final BufferedReaderTerminalLines terminalLines = new BufferedReaderTerminalLines(stdIn);
+            final BufferedReaderTerminalLines terminalLines = new BufferedReaderTerminalLines(reader);
             final FIXRenderer fixRenderer = new FIXRenderer("src/main/resources/FIX42.xml");
             final TopPane<String>
-                    topPane =
-                    new TopPane<>(logViewerScreen,
-                                terminalLines);
-            final BottomPane<String> bottomPane = new BottomPane<>(logViewerScreen,
-                                                                   new ListTerminalLines(),
-                                                                   fixRenderer);
+                    topPane = new TopPane<>(logViewerScreen, terminalLines);
+            final BottomPane<String>
+                    bottomPane = new BottomPane<>(logViewerScreen, new ListTerminalLines(), fixRenderer);
             final ResizePane resizePane = new ResizePane(logViewerScreen);
             bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
             final List<Pane> panes = Arrays.asList(topPane, resizePane, bottomPane);
@@ -105,16 +102,16 @@ public class Main
         catch (final Exception e)
         {
             LOGGER.fatal("Unexpected error:", e);
-            if (stdIn != null)
+            if (reader != null)
             {
-                stdIn.close();
+                reader.close();
             }
         }
         finally
         {
-            if (stdIn != null)
+            if (reader != null)
             {
-                stdIn.close();
+                reader.close();
             }
         }
     }
