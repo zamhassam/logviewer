@@ -1,4 +1,4 @@
-package com.zam.logviewer;
+package com.zam.logviewer.renderers;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

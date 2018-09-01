@@ -6,7 +6,7 @@ import com.googlecode.lanterna.terminal.Terminal;
 
 import java.io.IOException;
 
-final class LogViewerScreen
+public final class LogViewerScreen
 {
     private final Terminal terminal;
     private final Screen screen;
@@ -17,48 +17,48 @@ final class LogViewerScreen
         this.screen = screen;
     }
 
-    void setCursorPosition(final TerminalPosition position)
+    public void setCursorPosition(final TerminalPosition position)
     {
         screen.setCursorPosition(position);
     }
 
-    int getTopPaneRowCount()
+    public int getTopPaneRowCount()
     {
         return screen.getTerminalSize().getRows() / 2;
     }
 
-    int getBottomPaneRowCount()
+    public int getBottomPaneRowCount()
     {
         return screen.getTerminalSize().getRows() - getTopPaneRowCount();
     }
 
-    int getBottomPaneRowOffset()
+    public int getBottomPaneRowOffset()
     {
         return getTopPaneRowCount() + 3;
     }
 
-    int getCursorRow()
+    public int getCursorRow()
     {
         return screen.getCursorPosition().getRow();
     }
 
-    void putString(final int row, final String string)
+    public void putString(final int row, final String string)
     {
         final String cleaned = string.replace('\001', '|');
         screen.newTextGraphics().putString(0, row, truncatePadLine(cleaned));
     }
 
-    void refresh() throws IOException
+    public void refresh() throws IOException
     {
         screen.refresh();
     }
 
-    void bell() throws IOException
+    public void bell() throws IOException
     {
         terminal.bell();
     }
 
-    void doResize()
+    public void doResize()
     {
         screen.doResizeIfNecessary();
     }

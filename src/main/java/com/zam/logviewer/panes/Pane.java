@@ -1,9 +1,10 @@
-package com.zam.logviewer;
+package com.zam.logviewer.panes;
 
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.terminal.TerminalResizeListener;
+import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.terminallines.Node;
 import com.zam.logviewer.terminallines.TerminalLines;
 import org.apache.logging.log4j.LogManager;
@@ -67,7 +68,7 @@ public abstract class Pane implements TerminalResizeListener
         }
     }
 
-    void onSelected() throws IOException
+    public void onSelected() throws IOException
     {
         setCursorPosition(lastKnownPosition);
         screen.refresh();

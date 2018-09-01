@@ -1,4 +1,4 @@
-package com.zam.logviewer;
+package com.zam.logviewer.renderers;
 
 import java.util.List;
 
