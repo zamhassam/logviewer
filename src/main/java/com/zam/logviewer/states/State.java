@@ -9,4 +9,6 @@ public interface State
     void init() throws IOException;
 
     State onEvent(KeyType keyType) throws IOException;
+
+    void setNextState(final State nextState);
 }

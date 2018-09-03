@@ -1,6 +1,7 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.TerminalPosition;
+import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.Terminal;
 
@@ -74,7 +75,7 @@ public final class LogViewerScreen
         return screen.getTerminalSize().getRows() - getTopPaneRowCount();
     }
 
-    public int getMiddlePaneRowOffset()
+    private int getMiddlePaneRowOffset()
     {
         return getTopPaneRowCount() + 2;
     }
@@ -108,6 +109,11 @@ public final class LogViewerScreen
     public void doResize()
     {
         screen.doResizeIfNecessary();
+    }
+
+    KeyStroke readInput() throws IOException
+    {
+        return screen.readInput();
     }
 
     private String truncatePadLine(final String line)

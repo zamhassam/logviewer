@@ -15,4 +15,10 @@ public class TerminatedState implements State
     {
         return this;
     }
+
+    @Override
+    public void setNextState(final State nextState)
+    {
+
+    }
 }

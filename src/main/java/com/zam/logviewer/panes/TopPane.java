@@ -2,14 +2,11 @@ package com.zam.logviewer.panes;
 
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.terminallines.TerminalLines;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
 public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
 {
-    private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
     private final TerminalLines<UnderlyingData> terminalLines;
     private final BottomPane<UnderlyingData> bottomPane;
@@ -17,7 +14,6 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
     public TopPane(final LogViewerScreen screen,
                    final TerminalLines<UnderlyingData> terminalLines,
                    final BottomPane<UnderlyingData> bottomPane)
-            throws IOException
     {
         super(screen, terminalLines);
         this.screen = screen;

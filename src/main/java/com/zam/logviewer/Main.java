@@ -1,6 +1,5 @@
 package com.zam.logviewer;
 
-import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
@@ -9,7 +8,10 @@ import com.zam.logviewer.panes.BottomPane;
 import com.zam.logviewer.panes.ResizePane;
 import com.zam.logviewer.panes.TopPane;
 import com.zam.logviewer.renderers.FIXRenderer;
-import com.zam.logviewer.states.*;
+import com.zam.logviewer.states.BottomPaneSelected;
+import com.zam.logviewer.states.ResizePaneSelected;
+import com.zam.logviewer.states.TerminatedState;
+import com.zam.logviewer.states.TopPaneSelected;
 import com.zam.logviewer.terminallines.BufferedReaderTerminalLines;
 import com.zam.logviewer.terminallines.ListTerminalLines;
 import org.apache.logging.log4j.LogManager;
@@ -67,24 +69,11 @@ public class Main
             final BottomPaneSelected<String> bottomPaneSelected = new BottomPaneSelected<>(bottomPane,
                                                                                            terminatedState,
                                                                                            logViewerScreen);
+
             topPaneSelected.setNextState(resizePaneSelected);
             resizePaneSelected.setNextState(bottomPaneSelected);
             bottomPaneSelected.setNextState(topPaneSelected);
-            State currentState = topPaneSelected;
-            currentState.init();
-            while (true)
-            {
-                final KeyStroke keyStroke = screen.readInput();
-                if (keyStroke == null || keyStroke.getKeyType() == null)
-                {
-                    continue;
-                }
-                currentState = currentState.onEvent(keyStroke.getKeyType());
-                if (currentState instanceof TerminatedState)
-                {
-                    return;
-                }
-            }
+            EventLoop.eventLoop(topPaneSelected, logViewerScreen);
         }
         catch (final Exception e)
         {

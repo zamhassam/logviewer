@@ -3,7 +3,6 @@ package com.zam.logviewer.states;
 import com.googlecode.lanterna.input.KeyType;
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.panes.BottomPane;
-import com.zam.logviewer.panes.TopPane;
 
 import java.io.IOException;
 
@@ -24,11 +23,13 @@ public class BottomPaneSelected<UnderlyingData> implements State
         this.nextState = this;
     }
 
+    @Override
     public void setNextState(final State nextState)
     {
         this.nextState = nextState;
     }
 
+    @Override
     public void init() throws IOException
     {
         bottomPane.onSelected();

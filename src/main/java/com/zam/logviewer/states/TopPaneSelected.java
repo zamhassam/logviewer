@@ -23,11 +23,13 @@ public class TopPaneSelected<UnderlyingData> implements State
         this.nextState = this;
     }
 
+    @Override
     public void setNextState(final State nextState)
     {
         this.nextState = nextState;
     }
 
+    @Override
     public void init() throws IOException
     {
         topPane.onSelected();

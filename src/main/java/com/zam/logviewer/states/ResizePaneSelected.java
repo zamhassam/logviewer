@@ -31,11 +31,13 @@ public class ResizePaneSelected<UnderlyingData> implements State
         this.logViewerScreen = logViewerScreen;
     }
 
+    @Override
     public void setNextState(final State nextState)
     {
         this.nextState = nextState;
     }
 
+    @Override
     public void init() throws IOException
     {
         resizePane.onSelected();

@@ -6,8 +6,6 @@ import com.googlecode.lanterna.terminal.TerminalResizeListener;
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.terminallines.Node;
 import com.zam.logviewer.terminallines.TerminalLines;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -15,7 +13,6 @@ import java.util.Optional;
 public abstract class AbstractPane<UnderlyingData> implements TerminalResizeListener, Pane
 {
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
-    private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
     private final TerminalLines<UnderlyingData> terminalLines;
     private int lastKnownRow;
@@ -78,7 +75,7 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
     }
 
     @Override
-    public void redrawScreen() throws IOException
+    public void redrawScreen()
     {
         final boolean giveTopMoreLines;
         giveTopMoreLines = terminalLines.getTopLineNode() == null ||
@@ -105,7 +102,7 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
         for (int i = 0; i < topSectionRowCount; i++)
         {
             final Optional<Node<UnderlyingData>> prev = terminalLines.prevNode(cur);
-            if (! prev.isPresent())
+            if (!prev.isPresent())
             {
                 break;
             }
@@ -130,7 +127,7 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
             screen.putString(i, cur.getRenderedData());
             terminalLines.setBottomLineNode(cur);
             final Optional<Node<UnderlyingData>> next = terminalLines.nextNode(cur);
-            if (! next.isPresent())
+            if (!next.isPresent())
             {
                 writeBlank = true;
             }
@@ -144,15 +141,8 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
     @Override
     public void onResized(final Terminal terminal, final TerminalSize newSize)
     {
-        try
-        {
-            redrawScreen();
-            screen.doResize();
-        }
-        catch (final IOException e)
-        {
-            LOGGER.error("Couldn't resize.");
-        }
+        redrawScreen();
+        screen.doResize();
     }
 
     abstract int getFirstRow();

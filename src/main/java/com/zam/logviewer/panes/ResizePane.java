@@ -3,14 +3,9 @@ package com.zam.logviewer.panes;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.zam.logviewer.LogViewerScreen;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
 
 public class ResizePane implements Pane
 {
-    private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
 
     public ResizePane(final LogViewerScreen screen)
@@ -19,21 +14,21 @@ public class ResizePane implements Pane
     }
 
     @Override
-    public void onDownArrow() throws IOException
+    public void onDownArrow()
     {
         screen.setRowSplitOffset(screen.getRowSplitOffset() + 1);
         redrawScreen();
     }
 
     @Override
-    public void onUpArrow() throws IOException
+    public void onUpArrow()
     {
         screen.setRowSplitOffset(screen.getRowSplitOffset() - 1);
         redrawScreen();
     }
 
     @Override
-    public void onSelected() throws IOException
+    public void onSelected()
     {
         screen.setCursorPosition(screen.getRowOfMiddlePane());
     }
