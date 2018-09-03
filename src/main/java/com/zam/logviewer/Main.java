@@ -1,13 +1,11 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.zam.logviewer.panes.BottomPane;
-import com.zam.logviewer.panes.Pane;
 import com.zam.logviewer.panes.ResizePane;
 import com.zam.logviewer.panes.TopPane;
 import com.zam.logviewer.renderers.FIXRenderer;
@@ -21,8 +19,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.List;
 
 public class Main
 {
@@ -48,7 +44,7 @@ public class Main
             }
             final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
             final BufferedReaderTerminalLines terminalLines = new BufferedReaderTerminalLines(reader);
-            final FIXRenderer fixRenderer = new FIXRenderer("src/main/resources/FIX42.xml");
+            final FIXRenderer fixRenderer = new FIXRenderer();
             final BottomPane<String>
                     bottomPane = new BottomPane<>(logViewerScreen, new ListTerminalLines(), fixRenderer);
             final TopPane<String>
