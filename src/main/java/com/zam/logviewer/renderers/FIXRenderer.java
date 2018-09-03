@@ -52,7 +52,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
 
     }
 
-    public FIXRenderer(final String fixFileLocation)
+    public FIXRenderer(final String ... fixFileLocation)
     {
         parseFixXml(fixFileLocation);
     }
@@ -161,16 +161,19 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
-    private void parseFixXml(final String fixFileLocation)
+    private void parseFixXml(final String[] fixFileLocations)
     {
-        try (final InputStream inputReader = new FileInputStream(fixFileLocation))
+        for (final String fixFileLocation : fixFileLocations)
         {
-            final NodeList nodeList = getNodeList(inputReader);
-            populateFields(nodeList, fields, enums);
-        }
-        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException e)
-        {
-            throw new IllegalStateException("Could not parse FIX XML: " + fixFileLocation, e);
+            try (final InputStream inputReader = new FileInputStream(fixFileLocation))
+            {
+                final NodeList nodeList = getNodeList(inputReader);
+                populateFields(nodeList, fields, enums);
+            }
+            catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException e)
+            {
+                throw new IllegalStateException("Could not parse FIX XML: " + fixFileLocation, e);
+            }
         }
     }
 

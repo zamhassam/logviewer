@@ -33,6 +33,7 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
     public void onUpArrow() throws IOException
     {
         super.onUpArrow();
+        bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
     }
 
     int getFirstRow()

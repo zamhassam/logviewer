@@ -22,31 +22,41 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import static com.zam.logviewer.CmdOptions.parseCommandLineArgs;
+
 public class Main
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static void main(final String[] args) throws IOException
     {
+        final CmdOptions cmdOptions = parseCommandLineArgs(args);
         final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
-//        defaultTerminalFactory.setForceTextTerminal(true);
         final Terminal terminal = defaultTerminalFactory.createTerminal();
         BufferedReader reader = null;
         try
         {
             final Screen screen = new TerminalScreen(terminal);
             screen.startScreen();
-            if (args.length == 0)
+            if (cmdOptions.getLogFile() == null)
             {
                 reader = new BufferedReader(new InputStreamReader(System.in));
             }
             else
             {
-                reader = new BufferedReader(new FileReader(args[0]));
+                reader = new BufferedReader(new FileReader(cmdOptions.getLogFile()));
             }
             final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
             final BufferedReaderTerminalLines terminalLines = new BufferedReaderTerminalLines(reader);
-            final FIXRenderer fixRenderer = new FIXRenderer();
+            final FIXRenderer fixRenderer;
+            if (cmdOptions.getFixXmls() != null)
+            {
+                fixRenderer = new FIXRenderer(cmdOptions.getFixXmls());
+            }
+            else
+            {
+                fixRenderer = new FIXRenderer();
+            }
             final BottomPane<String>
                     bottomPane = new BottomPane<>(logViewerScreen, new ListTerminalLines(), fixRenderer);
             final TopPane<String>
@@ -91,4 +101,5 @@ public class Main
             }
         }
     }
+
 }

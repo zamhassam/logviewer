@@ -23,6 +23,9 @@ shadowJar {
 }
 
 dependencies {
+    // https://mvnrepository.com/artifact/commons-cli/commons-cli
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
+
     // https://mvnrepository.com/artifact/org.quickfixj/quickfixj-messages-all
     compile group: 'org.quickfixj', name: 'quickfixj-messages-all', version: '2.1.0'
 
