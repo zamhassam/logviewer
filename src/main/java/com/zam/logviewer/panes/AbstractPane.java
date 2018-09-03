@@ -33,7 +33,6 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
         if (!node.isPresent())
         {
             screen.bell();
-            screen.refresh();
             return;
         }
         if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
@@ -44,7 +43,6 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
         {
             terminalLines.setCurrentLineNode(node.get());
             setCursorPosition(screen.getCursorRow() + 1);
-            screen.refresh();
         }
     }
 
@@ -55,7 +53,6 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
         if (!node.isPresent())
         {
             screen.bell();
-            screen.refresh();
             return;
         }
         if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getTopLineNode().getRow())
@@ -66,21 +63,18 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
         {
             terminalLines.setCurrentLineNode(node.get());
             setCursorPosition(screen.getCursorRow() - 1);
-            screen.refresh();
         }
     }
 
     @Override
-    public void onSelected() throws IOException
+    public void onSelected()
     {
-        setCursorPosition(lastKnownRow);
-        screen.refresh();
+        screen.setCursorPosition(lastKnownRow);
     }
 
     void setCursorPosition(final int row)
     {
         lastKnownRow = row;
-        screen.setCursorPosition(row);
     }
 
     @Override
@@ -145,7 +139,6 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
                 cur = next.get();
             }
         }
-        screen.refresh();
     }
 
     @Override

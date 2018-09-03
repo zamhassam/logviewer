@@ -11,9 +11,9 @@ import com.zam.logviewer.panes.Pane;
 import com.zam.logviewer.panes.ResizePane;
 import com.zam.logviewer.panes.TopPane;
 import com.zam.logviewer.renderers.FIXRenderer;
+import com.zam.logviewer.states.*;
 import com.zam.logviewer.terminallines.BufferedReaderTerminalLines;
 import com.zam.logviewer.terminallines.ListTerminalLines;
-import com.zam.logviewer.terminallines.TerminalLines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,19 +49,33 @@ public class Main
             final LogViewerScreen logViewerScreen = new LogViewerScreen(terminal, screen);
             final BufferedReaderTerminalLines terminalLines = new BufferedReaderTerminalLines(reader);
             final FIXRenderer fixRenderer = new FIXRenderer("src/main/resources/FIX42.xml");
-            final TopPane<String>
-                    topPane = new TopPane<>(logViewerScreen, terminalLines);
             final BottomPane<String>
                     bottomPane = new BottomPane<>(logViewerScreen, new ListTerminalLines(), fixRenderer);
+            final TopPane<String>
+                    topPane = new TopPane<>(logViewerScreen, terminalLines, bottomPane);
             final ResizePane resizePane = new ResizePane(logViewerScreen);
             bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
-            final List<Pane> panes = Arrays.asList(topPane, resizePane, bottomPane);
-            Pane selectedPane = topPane;
-            selectedPane.onSelected();
-            screen.refresh();
             terminal.addResizeListener(topPane);
             terminal.addResizeListener(resizePane);
             terminal.addResizeListener(bottomPane);
+            final TerminatedState terminatedState = new TerminatedState();
+
+            final TopPaneSelected<String> topPaneSelected = new TopPaneSelected<>(topPane,
+                                                                                  terminatedState,
+                                                                                  logViewerScreen);
+            final ResizePaneSelected<String> resizePaneSelected = new ResizePaneSelected<>(topPane,
+                                                                                           bottomPane,
+                                                                                           resizePane,
+                                                                                           terminatedState,
+                                                                                           logViewerScreen);
+            final BottomPaneSelected<String> bottomPaneSelected = new BottomPaneSelected<>(bottomPane,
+                                                                                           terminatedState,
+                                                                                           logViewerScreen);
+            topPaneSelected.setNextState(resizePaneSelected);
+            resizePaneSelected.setNextState(bottomPaneSelected);
+            bottomPaneSelected.setNextState(topPaneSelected);
+            State currentState = topPaneSelected;
+            currentState.init();
             while (true)
             {
                 final KeyStroke keyStroke = screen.readInput();
@@ -69,33 +83,10 @@ public class Main
                 {
                     continue;
                 }
-                switch (keyStroke.getKeyType())
+                currentState = currentState.onEvent(keyStroke.getKeyType());
+                if (currentState instanceof TerminatedState)
                 {
-                    case Tab:
-                        selectedPane = next(panes, selectedPane);
-                        selectedPane.onSelected();
-                        break;
-                    default:
-                        final boolean shouldExit;
-                        if (selectedPane == topPane)
-                        {
-                            shouldExit =
-                                    onKeyTypeTopPane(keyStroke.getKeyType(), topPane, bottomPane, terminalLines);
-                        }
-                        else if (selectedPane == resizePane)
-                        {
-                            shouldExit =
-                                    onKeyTypeResizePane(keyStroke.getKeyType(), topPane, resizePane, bottomPane);
-                        }
-                        else
-                        {
-                            shouldExit =
-                                    onKeyTypeBottomPane(keyStroke.getKeyType(), bottomPane);
-                        }
-                        if (shouldExit)
-                        {
-                            return;
-                        }
+                    return;
                 }
             }
         }
@@ -114,82 +105,5 @@ public class Main
                 reader.close();
             }
         }
-    }
-
-    private static boolean onKeyTypeTopPane(final KeyType keyType,
-                                            final Pane topPane,
-                                            final BottomPane<String> bottomPane,
-                                            final TerminalLines<String> terminalLines)
-            throws IOException
-    {
-        switch (keyType)
-        {
-            case ArrowDown:
-                topPane.onDownArrow();
-                bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
-                topPane.onSelected();
-                break;
-            case ArrowUp:
-                topPane.onUpArrow();
-                bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
-                topPane.onSelected();
-                break;
-            case Escape:
-                return true;
-        }
-        return false;
-    }
-
-    private static boolean onKeyTypeResizePane(final KeyType keyType,
-                                               final Pane topPane,
-                                               final ResizePane resizePane,
-                                               final BottomPane bottomPane)
-            throws IOException
-    {
-        switch (keyType)
-        {
-            case ArrowDown:
-                resizePane.onDownArrow();
-                topPane.redrawScreen();
-                bottomPane.redrawScreen();
-                resizePane.onSelected();
-                break;
-            case ArrowUp:
-                resizePane.onUpArrow();
-                topPane.redrawScreen();
-                bottomPane.redrawScreen();
-                resizePane.onSelected();
-                break;
-            case Escape:
-                return true;
-        }
-        return false;
-    }
-
-    private static boolean onKeyTypeBottomPane(final KeyType keyType,
-                                               final BottomPane bottomPane)
-            throws IOException
-    {
-        switch (keyType)
-        {
-            case ArrowDown:
-                bottomPane.onDownArrow();
-                bottomPane.onSelected();
-                break;
-            case ArrowUp:
-                bottomPane.onUpArrow();
-                bottomPane.onSelected();
-                break;
-            case Escape:
-                return true;
-        }
-        return false;
-    }
-
-    private static Pane next(final List<Pane> panes, final Pane cur)
-    {
-        final int curIndex = panes.indexOf(cur);
-        final int newIndex = (curIndex + 1) % panes.size();
-        return panes.get(newIndex);
     }
 }

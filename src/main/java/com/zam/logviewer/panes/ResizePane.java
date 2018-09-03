@@ -23,7 +23,6 @@ public class ResizePane implements Pane
     {
         screen.setRowSplitOffset(screen.getRowSplitOffset() + 1);
         redrawScreen();
-        screen.refresh();
     }
 
     @Override
@@ -31,14 +30,12 @@ public class ResizePane implements Pane
     {
         screen.setRowSplitOffset(screen.getRowSplitOffset() - 1);
         redrawScreen();
-        screen.refresh();
     }
 
     @Override
     public void onSelected() throws IOException
     {
         screen.setCursorPosition(screen.getRowOfMiddlePane());
-        screen.refresh();
     }
 
     @Override
@@ -52,6 +49,5 @@ public class ResizePane implements Pane
     public void redrawScreen()
     {
         screen.putString(screen.getRowOfMiddlePane(), "");
-        screen.setCursorPosition(screen.getRowOfMiddlePane());
     }
 }

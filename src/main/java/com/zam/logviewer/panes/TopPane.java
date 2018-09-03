@@ -11,13 +11,18 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private final LogViewerScreen screen;
+    private final TerminalLines<UnderlyingData> terminalLines;
+    private final BottomPane<UnderlyingData> bottomPane;
 
     public TopPane(final LogViewerScreen screen,
-                   final TerminalLines<UnderlyingData> terminalLines)
+                   final TerminalLines<UnderlyingData> terminalLines,
+                   final BottomPane<UnderlyingData> bottomPane)
             throws IOException
     {
         super(screen, terminalLines);
         this.screen = screen;
+        this.terminalLines = terminalLines;
+        this.bottomPane = bottomPane;
         redrawScreen();
     }
 
@@ -25,14 +30,13 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
     public void onDownArrow() throws IOException
     {
         super.onDownArrow();
-        screen.refresh();
+        bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
     }
 
     @Override
     public void onUpArrow() throws IOException
     {
         super.onUpArrow();
-        screen.refresh();
     }
 
     int getFirstRow()
