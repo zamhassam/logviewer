@@ -10,7 +10,7 @@ import com.zam.logviewer.terminallines.TerminalLines;
 import java.io.IOException;
 import java.util.Optional;
 
-public abstract class AbstractPane<UnderlyingData> implements TerminalResizeListener, Pane
+public abstract class AbstractPane<UnderlyingData> implements Pane
 {
     private static final double PERCENT_OF_SCREEN_ABOVE = 0.7;
     private final LogViewerScreen screen;
@@ -139,10 +139,9 @@ public abstract class AbstractPane<UnderlyingData> implements TerminalResizeList
     }
 
     @Override
-    public void onResized(final Terminal terminal, final TerminalSize newSize)
+    public void onResized()
     {
         redrawScreen();
-        screen.doResize();
     }
 
     abstract int getFirstRow();

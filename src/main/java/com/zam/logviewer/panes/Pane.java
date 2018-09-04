@@ -6,7 +6,7 @@ import com.googlecode.lanterna.terminal.TerminalResizeListener;
 
 import java.io.IOException;
 
-public interface Pane extends TerminalResizeListener
+public interface Pane
 {
     void onDownArrow() throws IOException;
 
@@ -14,7 +14,7 @@ public interface Pane extends TerminalResizeListener
 
     void onSelected() throws IOException;
 
-    void onResized(Terminal terminal, TerminalSize newSize);
+    void onResized();
 
     void redrawScreen() throws IOException;
 }

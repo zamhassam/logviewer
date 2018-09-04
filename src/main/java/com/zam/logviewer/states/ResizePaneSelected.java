@@ -47,7 +47,7 @@ public class ResizePaneSelected<UnderlyingData> implements State
     @Override
     public State onEvent(final KeyStroke keyStroke) throws IOException
     {
-        if (keyStroke == null || keyStroke.getKeyType() == null)
+        if (keyStroke.getKeyType() == null)
         {
             return this;
         }

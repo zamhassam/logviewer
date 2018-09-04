@@ -21,6 +21,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.zam.logviewer.CmdOptions.parseCommandLineArgs;
 
@@ -63,9 +68,10 @@ public class Main
                     topPane = new TopPane<>(logViewerScreen, terminalLines, bottomPane);
             final ResizePane resizePane = new ResizePane(logViewerScreen);
             bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
-            terminal.addResizeListener(topPane);
-            terminal.addResizeListener(resizePane);
-            terminal.addResizeListener(bottomPane);
+
+            final BlockingQueue<EventLoop.Event> events = new LinkedBlockingQueue<>();
+            terminal.addResizeListener(((terminal1, newSize) ->
+                    events.add(new EventLoop.Event(null, true))));
             final TerminatedState terminatedState = new TerminatedState();
 
             final TopPaneSelected<String> topPaneSelected = new TopPaneSelected<>(topPane,
@@ -80,10 +86,34 @@ public class Main
                                                                                            terminatedState,
                                                                                            logViewerScreen);
 
+            final ExecutorService eventPoller = Executors.newSingleThreadExecutor(r ->
+                                                                                  {
+                                                                                      final Thread t = Executors.defaultThreadFactory().newThread(r);
+                                                                                      t.setDaemon(true);
+                                                                                      return t;
+                                                                                  });
+            eventPoller.execute(() ->
+                               {
+                                   while (true)
+                                   {
+                                       try
+                                       {
+                                           events.add(new EventLoop.Event(screen.readInput(), false));
+                                       }
+                                       catch (final IOException e)
+                                       {
+                                           LOGGER.error("Could not read input", e);
+                                       }
+                                   }
+                               });
             topPaneSelected.setNextState(resizePaneSelected);
             resizePaneSelected.setNextState(bottomPaneSelected);
             bottomPaneSelected.setNextState(topPaneSelected);
-            EventLoop.eventLoop(topPaneSelected, logViewerScreen);
+            EventLoop.eventLoop(topPaneSelected,
+                                logViewerScreen,
+                                events,
+                                Arrays.asList(topPane, resizePane, bottomPane));
+
         }
         catch (final Exception e)
         {

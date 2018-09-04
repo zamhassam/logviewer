@@ -34,10 +34,9 @@ public class ResizePane implements Pane
     }
 
     @Override
-    public void onResized(final Terminal terminal, final TerminalSize newSize)
+    public void onResized()
     {
         redrawScreen();
-        screen.doResize();
     }
 
     @Override
