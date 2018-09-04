@@ -1,6 +1,6 @@
 package com.zam.logviewer.states;
 
-import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.input.KeyStroke;
 
 public class TerminatedState implements State
 {
@@ -11,7 +11,7 @@ public class TerminatedState implements State
     }
 
     @Override
-    public State onEvent(final KeyType keyType)
+    public State onEvent(final KeyStroke keyStroke)
     {
         return this;
     }

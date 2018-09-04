@@ -1,6 +1,6 @@
 package com.zam.logviewer.states;
 
-import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.input.KeyStroke;
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.panes.BottomPane;
 
@@ -37,9 +37,13 @@ public class BottomPaneSelected<UnderlyingData> implements State
     }
 
     @Override
-    public State onEvent(final KeyType keyType) throws IOException
+    public State onEvent(final KeyStroke keyStroke) throws IOException
     {
-        switch (keyType)
+        if (keyStroke == null || keyStroke.getKeyType() == null)
+        {
+            return this;
+        }
+        switch (keyStroke.getKeyType())
         {
             case ArrowDown:
                 bottomPane.onDownArrow();

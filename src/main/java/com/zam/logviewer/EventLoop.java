@@ -15,11 +15,7 @@ class EventLoop
         while (true)
         {
             final KeyStroke keyStroke = screen.readInput();
-            if (keyStroke == null || keyStroke.getKeyType() == null)
-            {
-                continue;
-            }
-            currentState = currentState.onEvent(keyStroke.getKeyType());
+            currentState = currentState.onEvent(keyStroke);
             if (currentState instanceof TerminatedState)
             {
                 return;
