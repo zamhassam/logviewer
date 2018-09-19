@@ -1,25 +1,18 @@
 package com.zam.logviewer.renderers;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import quickfix.FixVersions;
 import quickfix.field.ApplVerID;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
+import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +23,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
     private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
     private static final Map<String, String> BEGINSTRING_TO_XML = new HashMap<>();
     private static final Map<String, String> APPLVER_TO_XML = new HashMap<>();
+    private static final String FIELDS_XPATH = "/fix/fields/field";
     private final Map<Integer, String> fields = new HashMap<>();
     private final Map<Integer, Map<String, String>> enums = new HashMap<>();
 
@@ -77,38 +71,43 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         final List<String> rows = new ArrayList<>();
         for (final String keyValue : fixMsg.split("[\\001|]"))
         {
-            final String[] keyValSplit = keyValue.split("=");
-            if (keyValSplit.length != 2)
-            {
-                rows.add(keyValue);
-                continue;
-            }
-
-            final int key;
-            try
-            {
-                key = Integer.parseInt(keyValSplit[0]);
-            }
-            catch (final NumberFormatException e)
-            {
-                rows.add(keyValue);
-                continue;
-            }
-
-            final String val;
-            if (enums.containsKey(key) && enums.get(key).containsKey(keyValSplit[1]))
-            {
-                val = enums.get(key).get(keyValSplit[1]) + "[" + keyValSplit[1] + "]";
-            }
-            else
-            {
-                val = keyValSplit[1];
-            }
-
-            final String keyRepr = fields.getOrDefault(key, keyValSplit[0]);
-            rows.add(keyRepr + "[" + keyValSplit[0] + "] = " + val);
+            processKeyValue(rows, keyValue);
         }
         return rows;
+    }
+
+    private void processKeyValue(final List<String> rows, final String keyValue)
+    {
+        final String[] keyValSplit = keyValue.split("=");
+        if (keyValSplit.length != 2)
+        {
+            rows.add(keyValue);
+            return;
+        }
+
+        final int key;
+        try
+        {
+            key = Integer.parseInt(keyValSplit[0]);
+        }
+        catch (final NumberFormatException e)
+        {
+            rows.add(keyValue);
+            return;
+        }
+
+        final String val;
+        if (enums.containsKey(key) && enums.get(key).containsKey(keyValSplit[1]))
+        {
+            val = enums.get(key).get(keyValSplit[1]) + "[" + keyValSplit[1] + "]";
+        }
+        else
+        {
+            val = keyValSplit[1];
+        }
+
+        final String keyRepr = fields.getOrDefault(key, keyValSplit[0]);
+        rows.add(keyRepr + "[" + keyValSplit[0] + "] = " + val);
     }
 
     private boolean guessAndPopulateFields(final String fixMsg)
@@ -152,10 +151,11 @@ public class FIXRenderer implements BottomPaneRenderer<String>
     {
         try (final InputStream inputReader = this.getClass().getResourceAsStream ("/" + dataDictFixXml))
         {
-            final NodeList nodeList = getNodeList(inputReader);
+            final Document document = new FIXPreProcessor().preProcessFields(inputReader);
+            final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
             populateFields(nodeList, fields, enums);
         }
-        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException e)
+        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
         {
             throw new IllegalStateException("Could not parse FIX XML: " + dataDictFixXml, e);
         }
@@ -167,38 +167,29 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         {
             try (final InputStream inputReader = new FileInputStream(fixFileLocation))
             {
-                final NodeList nodeList = getNodeList(inputReader);
+                final Document document = new FIXPreProcessor().preProcessFields(inputReader);
+                final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
                 populateFields(nodeList, fields, enums);
             }
-            catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException e)
+            catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
             {
                 throw new IllegalStateException("Could not parse FIX XML: " + fixFileLocation, e);
             }
         }
     }
 
-    private NodeList getNodeList(final InputStream fixFile)
-            throws XPathExpressionException, ParserConfigurationException, SAXException, IOException
-    {
-        final XPathExpression xPathExpression = XPathFactory.newInstance().newXPath().compile("/fix/fields/field");
-        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        final Document document = documentBuilder.parse(fixFile);
-        return (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
-    }
-
     private static void populateFields(final NodeList nodeList,
                                        final Map<Integer, String> fields,
                                        final Map<Integer, Map<String, String>> enums)
     {
-        forEach(nodeList, node ->
+        XmlFunctions.forEach(nodeList, node ->
         {
             final String name = node.getAttributes().getNamedItem("name").getNodeValue();
             final int number = Integer.parseInt(node.getAttributes().getNamedItem("number").getNodeValue());
             fields.put(number, name);
             if (node.hasChildNodes())
             {
-                forEach(node.getChildNodes(), childNode ->
+                XmlFunctions.forEach(node.getChildNodes(), childNode ->
                 {
                     final String enumName = childNode.getAttributes().getNamedItem("description").getNodeValue();
                     final String enumValue = childNode.getAttributes().getNamedItem("enum").getNodeValue();
@@ -207,17 +198,5 @@ public class FIXRenderer implements BottomPaneRenderer<String>
                 });
             }
         });
-    }
-
-    private static void forEach(final NodeList nodes, final Consumer<Node> handler)
-    {
-        for (int i = 0; i < nodes.getLength(); i++)
-        {
-            final Node node = nodes.item(i);
-            if (node instanceof Element)
-            {
-                handler.accept(node);
-            }
-        }
     }
 }
