@@ -53,6 +53,10 @@ public class ListTerminalLines implements TerminalLines<String>
         {
             linkedList.addLast(string, string);
         }
+        if (strings.isEmpty())
+        {
+            linkedList.addLast("", "");
+        }
         final Optional<Node<String>> node = nextNode(linkedList.getHead());
         node.orElseThrow(() -> new IllegalStateException("Couldn't find first line."));
         setCurrentLineNode(node.get());
