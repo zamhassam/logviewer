@@ -149,54 +149,33 @@ public class FIXRenderer implements BottomPaneRenderer<String>
 
     private void parseFixXmlResource(final String dataDictFixXml)
     {
-        try (final InputStream inputReader = this.getClass().getResourceAsStream ("/" + dataDictFixXml))
-        {
-            final Document document = new FIXPreProcessor().preProcessFields(inputReader);
-            final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
-            populateFields(nodeList, fields, enums);
-        }
-        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
-        {
-            throw new IllegalStateException("Could not parse FIX XML: " + dataDictFixXml, e);
-        }
+//        try (final InputStream inputReader = this.getClass().getResourceAsStream ("/" + dataDictFixXml))
+//        {
+//            final Document document = new FIXPreProcessor().preProcessFields(inputReader);
+//            final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
+//            FIXPreProcessor.populateFields(nodeList, fields, fieldsNameToId, fieldsIdToType, enums);
+//        }
+//        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
+//        {
+//            throw new IllegalStateException("Could not parse FIX XML: " + dataDictFixXml, e);
+//        }
     }
 
     private void parseFixXml(final String[] fixFileLocations)
     {
-        for (final String fixFileLocation : fixFileLocations)
-        {
-            try (final InputStream inputReader = new FileInputStream(fixFileLocation))
-            {
-                final Document document = new FIXPreProcessor().preProcessFields(inputReader);
-                final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
-                populateFields(nodeList, fields, enums);
-            }
-            catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
-            {
-                throw new IllegalStateException("Could not parse FIX XML: " + fixFileLocation, e);
-            }
-        }
+//        for (final String fixFileLocation : fixFileLocations)
+//        {
+//            try (final InputStream inputReader = new FileInputStream(fixFileLocation))
+//            {
+//                final Document document = new FIXPreProcessor().preProcessFields(inputReader);
+//                final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
+//                FIXPreProcessor.populateFields(nodeList, fields, fieldsNameToId, fieldsIdToType, enums);
+//            }
+//            catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
+//            {
+//                throw new IllegalStateException("Could not parse FIX XML: " + fixFileLocation, e);
+//            }
+//        }
     }
 
-    private static void populateFields(final NodeList nodeList,
-                                       final Map<Integer, String> fields,
-                                       final Map<Integer, Map<String, String>> enums)
-    {
-        XmlFunctions.forEach(nodeList, node ->
-        {
-            final String name = node.getAttributes().getNamedItem("name").getNodeValue();
-            final int number = Integer.parseInt(node.getAttributes().getNamedItem("number").getNodeValue());
-            fields.put(number, name);
-            if (node.hasChildNodes())
-            {
-                XmlFunctions.forEach(node.getChildNodes(), childNode ->
-                {
-                    final String enumName = childNode.getAttributes().getNamedItem("description").getNodeValue();
-                    final String enumValue = childNode.getAttributes().getNamedItem("enum").getNodeValue();
-                    final Map<String, String> enumMap = enums.computeIfAbsent(number, HashMap::new);
-                    enumMap.put(enumValue, enumName);
-                });
-            }
-        });
-    }
 }
