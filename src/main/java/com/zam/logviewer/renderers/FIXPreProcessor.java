@@ -20,13 +20,13 @@ import java.util.regex.Pattern;
 class FIXPreProcessor
 {
     private static final String FIELDS_XPATH = "/fix/fields/field";
+    private static final String COMPONENTS_XPATH = "/fix/components/component";
+    private static final String MESSAGES_XPATH = "/fix/messages/message";
+    public static final int MSG_TYPE_KEY = 35;
     private static final Pattern FIX_MSG = Pattern.compile("^.*[^\\d]*(8=FIX.*[\\001|].*[\\001|]).*$");
     private static final Pattern BEGINSTRING = Pattern.compile("8=(FIX.*?)[\\001|].*.*$");
     private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
     private static final ImmutableList<String> RELEVANT_NODE_TYPES = ImmutableList.of("field", "group", "component");
-    private static final String COMPONENTS_XPATH = "/fix/components/component";
-    private static final String MESSAGES_XPATH = "/fix/messages/message";
-    public static final int MSG_TYPE_KEY = 35;
     public static final String NUMINGROUP = "NUMINGROUP";
     private final Map<String, FixFieldNode> messages = new HashMap<>();
     private Map<Integer, String> fieldsIdToName = new HashMap<>();
@@ -51,11 +51,11 @@ class FIXPreProcessor
         return document;
     }
 
-    private void removeComponents(final NodeList messages, final NodeList components)
+    private static void removeComponents(final NodeList messages, final NodeList components)
     {
         final Map<String, NodeList> idToComponent = getComponents(components);
         XmlFunctions.forEach(messages, message ->
-                flattenComponentStructure(idToComponent, message));
+                flattenComponentStructure(message, idToComponent));
     }
 
     private void populateMessages(final NodeList messages)
@@ -85,7 +85,7 @@ class FIXPreProcessor
         });
     }
 
-    private void flattenComponentStructure(Map<String, NodeList> components, Node message)
+    private static void flattenComponentStructure(Node message, Map<String, NodeList> components)
     {
         int replacementsDone;
         do
@@ -95,12 +95,7 @@ class FIXPreProcessor
         while (replacementsDone > 0);
     }
 
-    private String getName(Node node)
-    {
-        return node.getAttributes().getNamedItem("name").getNodeValue();
-    }
-
-    private int flattenComponents(final Node root, final Map<String, NodeList> components)
+    private static int flattenComponents(final Node root, final Map<String, NodeList> components)
     {
         final AtomicInteger replacementsDone = new AtomicInteger(0);
         XmlFunctions.forEach(root.getChildNodes(), field ->
@@ -110,11 +105,12 @@ class FIXPreProcessor
                 return;
             }
 
-            if ("group".equals(field.getNodeName()))
+            String type = field.getNodeName();
+            if ("group".equals(type))
             {
                 replacementsDone.getAndAdd(flattenComponents(field, components));
             }
-            else if ("component".equals(field.getNodeName()))
+            else if ("component".equals(type))
             {
                 final NodeList replacements = components.get(getName(field));
                 XmlFunctions.forEach(replacements, toInsert ->
@@ -133,7 +129,7 @@ class FIXPreProcessor
         return replacementsDone.get();
     }
 
-    private Map<String, NodeList> getComponents(final NodeList components)
+    private static Map<String, NodeList> getComponents(final NodeList components)
     {
         final Map<String, NodeList> componentsByName = new HashMap<>();
         XmlFunctions.forEach(components, node ->
@@ -146,7 +142,7 @@ class FIXPreProcessor
         return componentsByName;
     }
 
-    static void populateFields(final NodeList nodeList,
+    private static void populateFields(final NodeList nodeList,
                                final Map<Integer, String> fieldsIdToName,
                                final Map<String, Integer> fieldsNameToId,
                                final Map<Integer, String> fieldsIdToType,
@@ -173,8 +169,14 @@ class FIXPreProcessor
         });
     }
 
+    private static String getName(Node node)
+    {
+        return node.getAttributes().getNamedItem("name").getNodeValue();
+    }
+
     public static final class FixFieldNode
     {
+
         private final String fieldName;
         private final int key;
         private final Map<Integer, FixFieldNode> children = new HashMap<>();
@@ -198,12 +200,5 @@ class FIXPreProcessor
                    ", key=" + key +
                    '}';
         }
-    }
-
-    public static void main(String[] args) throws ParserConfigurationException, SAXException, XPathExpressionException, IOException
-    {
-        FIXPreProcessor fixPreProcessor = new FIXPreProcessor();
-        fixPreProcessor.preProcessFields(FIXPreProcessor.class.getResourceAsStream("/FIX50.xml"));
-        System.out.println(fixPreProcessor);
     }
 }
