@@ -126,9 +126,68 @@ public class FIXPreProcessorTest
     }
 
     @Test
-    public void generateTreeForNestedGroups()
+    public void generateTreeForNestedGroups() throws
+                                              SAXException,
+                                              ParserConfigurationException,
+                                              XPathExpressionException,
+                                              IOException
     {
+        final String input =
+                "<fix major=\"5\" minor=\"0\">\n" +
+                "  <header/>\n" +
+                "  <trailer/>\n" +
+                "  <messages>\n" +
+                "    <message name=\"IOI\" msgtype=\"6\" msgcat=\"app\">\n" +
+                "      <field name=\"IOIID\" required=\"Y\"/>\n" +
+                "      <group name=\"NoInFirstGroup\" required=\"N\">\n" +
+                "        <field name=\"Group1Field1\" required=\"N\"/>\n" +
+                "        <group name=\"NoInSecondGroup\" required=\"N\">\n" +
+                "          <field name=\"Group2Field2\" required=\"N\"/>\n" +
+                "        </group>\n" +
+                "      </group>\n" +
+                "    </message>\n" +
+                "  </messages>\n" +
+                "  <fields>\n" +
+                "    <field number=\"1\" name=\"IOIID\" type=\"UTCTIMESTAMP\"/>\n" +
+                "    <field number=\"2\" name=\"NoInFirstGroup\" type=\"NUMINGROUP\"/>\n" +
+                "    <field number=\"3\" name=\"NoInSecondGroup\" type=\"NUMINGROUP\"/>\n" +
+                "    <field number=\"4\" name=\"Group1Field1\" type=\"UTCTIMESTAMP\"/>\n" +
+                "    <field number=\"5\" name=\"Group2Field2\" type=\"UTCTIMESTAMP\"/>\n" +
+                "  </fields>\n" +
+                "</fix>";
+        final FIXPreProcessor
+                fixPreProcessor =
+                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6");
 
+        assertThat(fixTreeRoot.hasChildren(), is(true));
+        assertThat(fixTreeRoot.getFieldName(), is("IOI"));
+        assertThat(fixTreeRoot.getKey(), is(-1));
+
+        final FIXPreProcessor.FixFieldNode ioiId = fixTreeRoot.getChildren().get(1);
+        assertThat(ioiId.hasChildren(), is(false));
+        assertThat(ioiId.getFieldName(), is("IOIID"));
+        assertThat(ioiId.getKey(), is(1));
+
+        final FIXPreProcessor.FixFieldNode noInFirstGroup = fixTreeRoot.getChildren().get(2);
+        assertThat(noInFirstGroup.hasChildren(), is(true));
+        assertThat(noInFirstGroup.getFieldName(), is("NoInFirstGroup"));
+        assertThat(noInFirstGroup.getKey(), is(2));
+
+        final FIXPreProcessor.FixFieldNode noInSecondGroup = noInFirstGroup.getChildren().get(3);
+        assertThat(noInSecondGroup.hasChildren(), is(true));
+        assertThat(noInSecondGroup.getFieldName(), is("NoInSecondGroup"));
+        assertThat(noInSecondGroup.getKey(), is(3));
+
+        final FIXPreProcessor.FixFieldNode group1Field = noInFirstGroup.getChildren().get(4);
+        assertThat(group1Field.hasChildren(), is(false));
+        assertThat(group1Field.getFieldName(), is("Group1Field1"));
+        assertThat(group1Field.getKey(), is(4));
+
+        final FIXPreProcessor.FixFieldNode group2Field = noInSecondGroup.getChildren().get(5);
+        assertThat(group2Field.hasChildren(), is(false));
+        assertThat(group2Field.getFieldName(), is("Group2Field2"));
+        assertThat(group2Field.getKey(), is(5));
     }
 
     @Test
