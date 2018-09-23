@@ -191,8 +191,64 @@ public class FIXPreProcessorTest
     }
 
     @Test
-    public void generateTreeWithHeaderAndTrailer()
+    public void generateTreeWithHeaderAndTrailer() throws
+                                                   SAXException,
+                                                   ParserConfigurationException,
+                                                   XPathExpressionException,
+                                                   IOException
     {
+        final String input =
+                "<fix>" +
+                "<header>" +
+                "<field name=\"header\" required=\"Y\"/>" +
+                "</header>" +
+                "<trailer>" +
+                "<field name=\"trailer\" required=\"Y\"/>" +
+                "</trailer>" +
+                "<messages>" +
+                "<message name=\"IOI\" msgtype=\"6\" msgcat=\"app\">" +
+                "<field name=\"IOITransType\" required=\"Y\"/>" +
+                "<field name=\"IOIID\" required=\"Y\"/>" +
+                "</message>" +
+                "</messages>" +
+                "<fields>" +
+                "<field number=\"23\" name=\"IOIID\" type=\"STRING\"/>" +
+                "<field number=\"1\" name=\"header\" type=\"STRING\"/>" +
+                "<field number=\"2\" name=\"trailer\" type=\"STRING\"/>" +
+                "<field number=\"28\" name=\"IOITransType\" type=\"CHAR\">" +
+                "<value enum=\"N\" description=\"NEW\"/>" +
+                "<value enum=\"C\" description=\"CANCEL\"/>" +
+                "<value enum=\"R\" description=\"REPLACE\"/>" +
+                "</field>" +
+                "</fields>" +
+                "</fix>";
+        final FIXPreProcessor
+                fixPreProcessor =
+                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6");
 
+        assertThat(fixTreeRoot.hasChildren(), is(true));
+        assertThat(fixTreeRoot.getFieldName(), is("IOI"));
+        assertThat(fixTreeRoot.getKey(), is(-1));
+
+        final FIXPreProcessor.FixFieldNode ioiId = fixTreeRoot.getChildren().get(23);
+        assertThat(ioiId.hasChildren(), is(false));
+        assertThat(ioiId.getFieldName(), is("IOIID"));
+        assertThat(ioiId.getKey(), is(23));
+
+        final FIXPreProcessor.FixFieldNode header = fixTreeRoot.getChildren().get(1);
+        assertThat(header.hasChildren(), is(false));
+        assertThat(header.getFieldName(), is("header"));
+        assertThat(header.getKey(), is(1));
+
+        final FIXPreProcessor.FixFieldNode trailer = fixTreeRoot.getChildren().get(2);
+        assertThat(trailer.hasChildren(), is(false));
+        assertThat(trailer.getFieldName(), is("trailer"));
+        assertThat(trailer.getKey(), is(2));
+
+        final FIXPreProcessor.FixFieldNode ioiTransType = fixTreeRoot.getChildren().get(28);
+        assertThat(ioiTransType.hasChildren(), is(false));
+        assertThat(ioiTransType.getFieldName(), is("IOITransType"));
+        assertThat(ioiTransType.getKey(), is(28));
     }
 }
