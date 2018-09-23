@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 class FIXPreProcessor
 {
@@ -26,87 +25,109 @@ class FIXPreProcessor
     private static final String MESSAGES_XPATH = "/fix/messages/message";
     private static final String HEADER_XPATH = "/fix/header";
     private static final String TRAILER_XPATH = "/fix/trailer";
-    public static final int MSG_TYPE_KEY = 35;
-    private static final Pattern FIX_MSG = Pattern.compile("^.*[^\\d]*(8=FIX.*[\\001|].*[\\001|]).*$");
-    private static final Pattern BEGINSTRING = Pattern.compile("8=(FIX.*?)[\\001|].*.*$");
-    private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
     private static final ImmutableList<String> RELEVANT_NODE_TYPES = ImmutableList.of("field", "group", "component");
     public static final String NUMINGROUP = "NUMINGROUP";
     private final Map<String, FixFieldNode> messageToFixTree = new HashMap<>();
-    private Map<Integer, String> fieldsIdToName = new HashMap<>();
-    private Map<Integer, String> fieldsIdToType = new HashMap<>();
-    private Map<String, Integer> fieldsNameToId = new HashMap<>();
-    private Map<Integer, Map<String, String>> enums = new HashMap<>();
+    private final Map<Integer, String> fieldsIdToName = new HashMap<>();
+    private final Map<Integer, String> fieldsIdToType = new HashMap<>();
+    private final Map<String, Integer> fieldsNameToId = new HashMap<>();
+    private final Map<Integer, Map<String, String>> enums = new HashMap<>();
+    private final List<Document> documents;
 
-    FIXPreProcessor()
+    FIXPreProcessor(final InputStream... inputStreams) throws
+                                                       IOException,
+                                                       SAXException,
+                                                       ParserConfigurationException,
+                                                       XPathExpressionException
     {
-    }
-
-    void preProcessFields(final InputStream... inputStreams)
-            throws
-            ParserConfigurationException,
-            SAXException,
-            XPathExpressionException,
-            IOException
-    {
-        final List<Document> documents = new ArrayList<>();
+        documents = new ArrayList<>();
         for (final InputStream inputStream : inputStreams)
         {
             documents.add(XmlFunctions.getDocument(inputStream));
         }
+        preProcessFields(documents);
+    }
 
+    FixFieldNode getFixTreeRoot(final String messageTypeKey)
+    {
+
+        return messageToFixTree.get(messageTypeKey);
+    }
+
+    private void preProcessFields(final List<Document> documents)
+            throws
+            XPathExpressionException
+    {
         final HashMap<String, NodeList> componentsByName = new HashMap<>();
         for (final Document document : documents)
         {
-            final NodeList fields = XmlFunctions.getNodeList(document, FIELDS_XPATH);
             final NodeList components = XmlFunctions.getNodeList(document, COMPONENTS_XPATH);
-            populateFields(fields, fieldsIdToName, fieldsNameToId, fieldsIdToType, enums);
             populateComponents(components, componentsByName);
+            final NodeList fields = XmlFunctions.getNodeList(document, FIELDS_XPATH);
+            populateFields(fields, fieldsIdToName, fieldsNameToId, fieldsIdToType, enums);
         }
 
         final List<Node> headerAndTrailer = new ArrayList<>();
         final List<Node> allMessages = new ArrayList<>();
-        for (final Document document : documents)
+        for (final Document document : this.documents)
         {
             final NodeList messages = XmlFunctions.getNodeList(document, MESSAGES_XPATH);
             final Node header = XmlFunctions.getNode(document, HEADER_XPATH);
             final Node trailer = XmlFunctions.getNode(document, TRAILER_XPATH);
-            XmlFunctions.forEach(header.getChildNodes(), headerAndTrailer::add);
-            XmlFunctions.forEach(trailer.getChildNodes(), headerAndTrailer::add);
+            if (header != null && header.hasChildNodes())
+            {
+                XmlFunctions.forEach(header.getChildNodes(), headerAndTrailer::add);
+            }
+            if (trailer != null && trailer.hasChildNodes())
+            {
+                XmlFunctions.forEach(trailer.getChildNodes(), headerAndTrailer::add);
+            }
             XmlFunctions.forEach(messages, allMessages::add);
         }
 
         for (final Node message : allMessages)
         {
-            headerAndTrailer.forEach(newChild ->
-                                     {
-                                         final Node toInsert = newChild.cloneNode(true);
-                                         message.getOwnerDocument().adoptNode(toInsert);
-                                         message.appendChild(toInsert);
-                                     });
+            addHeaderTrailerFields(headerAndTrailer, message);
             flattenComponentStructure(message, componentsByName);
-            populateFixTree(messageToFixTree, message);
+            populateFixTree(messageToFixTree, message, fieldsNameToId, fieldsIdToType);
         }
     }
 
-    private void populateFixTree(final Map<String, FixFieldNode> messageToFixTree, final Node message)
+    private void addHeaderTrailerFields(final List<Node> headerAndTrailer, final Node message)
     {
-        final String messageName = getName(message);
-        final FixFieldNode messageRoot = new FixFieldNode(-1, messageName);
-        messageToFixTree.put(messageName, messageRoot);
-        insertAllChildren(message.getChildNodes(), messageRoot);
+        headerAndTrailer.forEach(newChild ->
+                                 {
+                                     final Node toInsert = newChild.cloneNode(true);
+                                     message.getOwnerDocument().adoptNode(toInsert);
+                                     message.appendChild(toInsert);
+                                 });
     }
 
-    private void insertAllChildren(final NodeList nodes, final FixFieldNode messageRoot)
+    private void populateFixTree(final Map<String, FixFieldNode> messageTypeKeyToFixTree,
+                                 final Node message,
+                                 final Map<String, Integer> fieldsNameToId,
+                                 final Map<Integer, String> fieldsIdToType)
+    {
+        final String messageName = getField(message, "name");
+        final String messageType = getField(message, "msgtype");
+        final FixFieldNode messageRoot = new FixFieldNode(-1, messageName);
+        messageTypeKeyToFixTree.put(messageType, messageRoot);
+        insertAllChildren(message.getChildNodes(), messageRoot, fieldsNameToId, fieldsIdToType);
+    }
+
+    private static void insertAllChildren(final NodeList nodes,
+                                   final FixFieldNode messageRoot,
+                                   final Map<String, Integer> fieldsNameToId,
+                                   final Map<Integer, String> fieldsIdToType)
     {
         XmlFunctions.forEach(nodes, node ->
         {
-            final String name = getName(node);
+            final String name = getField(node, "name");
             final int id = fieldsNameToId.get(name);
             final FixFieldNode field = new FixFieldNode(id, name);
             if (fieldsIdToType.get(id).equals(NUMINGROUP))
             {
-                insertAllChildren(node.getChildNodes(), field);
+                insertAllChildren(node.getChildNodes(), field, fieldsNameToId, fieldsIdToType);
             }
             messageRoot.children.put(id, field);
         });
@@ -139,7 +160,7 @@ class FIXPreProcessor
             }
             else if ("component".equals(type))
             {
-                final NodeList replacements = components.get(getName(field));
+                final NodeList replacements = components.get(getField(field, "name"));
                 XmlFunctions.forEach(replacements, toInsert ->
                 {
                     if (!RELEVANT_NODE_TYPES.contains(toInsert.getNodeName()))
@@ -165,7 +186,7 @@ class FIXPreProcessor
         {
             if (node instanceof org.w3c.dom.Element)
             {
-                componentsByName.put(getName(node), node.getChildNodes());
+                componentsByName.put(getField(node, "name"), node.getChildNodes());
             }
         });
     }
@@ -177,29 +198,36 @@ class FIXPreProcessor
                                        final Map<Integer, Map<String, String>> enums)
     {
         XmlFunctions.forEach(nodeList, node ->
-        {
-            final String name = node.getAttributes().getNamedItem("name").getNodeValue();
-            final int number = Integer.parseInt(node.getAttributes().getNamedItem("number").getNodeValue());
-            final String type = node.getAttributes().getNamedItem("type").getNodeValue();
-            fieldsIdToName.put(number, name);
-            fieldsNameToId.put(name, number);
-            fieldsIdToType.put(number, type);
-            if (node.hasChildNodes())
-            {
-                XmlFunctions.forEach(node.getChildNodes(), childNode ->
-                {
-                    final String enumName = childNode.getAttributes().getNamedItem("description").getNodeValue();
-                    final String enumValue = childNode.getAttributes().getNamedItem("enum").getNodeValue();
-                    final Map<String, String> enumMap = enums.computeIfAbsent(number, HashMap::new);
-                    enumMap.put(enumValue, enumName);
-                });
-            }
-        });
+                populateFields(fieldsIdToName, fieldsNameToId, fieldsIdToType, enums, node));
     }
 
-    private static String getName(final Node node)
+    private static void populateFields(final Map<Integer, String> fieldsIdToName,
+                                       final Map<String, Integer> fieldsNameToId,
+                                       final Map<Integer, String> fieldsIdToType,
+                                       final Map<Integer, Map<String, String>> enums,
+                                       final Node node)
     {
-        return node.getAttributes().getNamedItem("name").getNodeValue();
+        final String name = getField(node, "name");
+        final int number = Integer.parseInt(getField(node, "number"));
+        final String type = getField(node, "type");
+        fieldsIdToName.put(number, name);
+        fieldsNameToId.put(name, number);
+        fieldsIdToType.put(number, type);
+        if (node.hasChildNodes())
+        {
+            XmlFunctions.forEach(node.getChildNodes(), childNode ->
+            {
+                final String enumName = getField(childNode, "description");
+                final String enumValue = getField(childNode, "enum");
+                final Map<String, String> enumMap = enums.computeIfAbsent(number, HashMap::new);
+                enumMap.put(enumValue, enumName);
+            });
+        }
+    }
+
+    private static String getField(final Node node, final String field)
+    {
+        return node.getAttributes().getNamedItem(field).getNodeValue();
     }
 
     public static final class FixFieldNode
@@ -220,6 +248,21 @@ class FIXPreProcessor
             return !children.isEmpty();
         }
 
+        public String getFieldName()
+        {
+            return fieldName;
+        }
+
+        public int getKey()
+        {
+            return key;
+        }
+
+        public Map<Integer, FixFieldNode> getChildren()
+        {
+            return children;
+        }
+
         @Override
         public String toString()
         {
@@ -228,17 +271,5 @@ class FIXPreProcessor
                    ", key=" + key +
                    '}';
         }
-    }
-
-    public static void main(final String[] args) throws
-                                                 ParserConfigurationException,
-                                                 SAXException,
-                                                 XPathExpressionException,
-                                                 IOException
-    {
-        final FIXPreProcessor fixPreProcessor = new FIXPreProcessor();
-        fixPreProcessor.preProcessFields(FIXPreProcessor.class.getResourceAsStream("/FIXT11.xml"),
-                                         FIXPreProcessor.class.getResourceAsStream("/FIX50.xml"));
-        System.out.println(fixPreProcessor);
     }
 }
