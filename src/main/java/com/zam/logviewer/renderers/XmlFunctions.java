@@ -33,6 +33,13 @@ class XmlFunctions
         return (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
     }
 
+    static Node getNode(final Document document, final String fieldsXpath)
+            throws XPathExpressionException
+    {
+        final XPathExpression xPathExpression = XPathFactory.newInstance().newXPath().compile(fieldsXpath);
+        return (Node) xPathExpression.evaluate(document, XPathConstants.NODE);
+    }
+
     static Document getDocument(final InputStream fixFile)
             throws ParserConfigurationException, SAXException, IOException
     {

@@ -71,18 +71,17 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         final List<String> rows = new ArrayList<>();
         for (final String keyValue : fixMsg.split("[\\001|]"))
         {
-            processKeyValue(rows, keyValue);
+            rows.add(processKeyValue(keyValue));
         }
         return rows;
     }
 
-    private void processKeyValue(final List<String> rows, final String keyValue)
+    private String processKeyValue(final String keyValue)
     {
         final String[] keyValSplit = keyValue.split("=");
         if (keyValSplit.length != 2)
         {
-            rows.add(keyValue);
-            return;
+            return keyValue;
         }
 
         final int key;
@@ -92,8 +91,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
         catch (final NumberFormatException e)
         {
-            rows.add(keyValue);
-            return;
+            return keyValue;
         }
 
         final String val;
@@ -107,7 +105,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
 
         final String keyRepr = fields.getOrDefault(key, keyValSplit[0]);
-        rows.add(keyRepr + "[" + keyValSplit[0] + "] = " + val);
+        return keyRepr + "[" + keyValSplit[0] + "] = " + val;
     }
 
     private boolean guessAndPopulateFields(final String fixMsg)
