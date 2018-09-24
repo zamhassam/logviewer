@@ -1,13 +1,10 @@
 package com.zam.logviewer.renderers;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import quickfix.FixVersions;
 import quickfix.field.ApplVerID;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -41,12 +38,14 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         APPLVER_TO_XML.put(ApplVerID.FIX50SP2, "FIX50SP2.xml");
     }
 
+    private FIXPreProcessor fixPreProcessor;
+
     public FIXRenderer()
     {
 
     }
 
-    public FIXRenderer(final String ... fixFileLocation)
+    public FIXRenderer(final String... fixFileLocation)
     {
         parseFixXml(fixFileLocation);
     }
@@ -55,16 +54,28 @@ public class FIXRenderer implements BottomPaneRenderer<String>
     public List<String> renderBottomPaneContents(final String line)
     {
         final Matcher fixMsgMatcher = FIX_MSG.matcher(line);
-        if (! fixMsgMatcher.find())
+        if (!fixMsgMatcher.find())
         {
             return Collections.emptyList();
         }
         final String fixMsg = fixMsgMatcher.group(1);
         if (fields.isEmpty())
         {
-            if (! guessAndPopulateFields(fixMsg))
+            try
             {
-                return Collections.emptyList();
+                if (fixPreProcessor == null)
+                {
+                    final Optional<FIXPreProcessor> fixPreProcessor = guessAndPopulateFields(fixMsg);
+                    if (! fixPreProcessor.isPresent())
+                    {
+                        return Collections.emptyList();
+                    }
+                    this.fixPreProcessor = fixPreProcessor.get();
+                }
+            }
+            catch (SAXException | ParserConfigurationException | XPathExpressionException | IOException e)
+            {
+                throw new IllegalStateException("Could not parse FIX XMLs.", e);
             }
         }
 
@@ -108,55 +119,59 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         return keyRepr + "[" + keyValSplit[0] + "] = " + val;
     }
 
-    private boolean guessAndPopulateFields(final String fixMsg)
+    private Optional<FIXPreProcessor> guessAndPopulateFields(final String fixMsg)
+            throws SAXException, ParserConfigurationException, XPathExpressionException, IOException
     {
+        final List<String> fixXmls = new ArrayList<>();
         final Matcher beginStringMatcher = BEGINSTRING.matcher(fixMsg);
-        if (! beginStringMatcher.find())
+        if (!beginStringMatcher.find())
         {
-            return true;
+            return Optional.empty();
         }
 
         final String beginString = beginStringMatcher.group(1);
         final String fixXml = BEGINSTRING_TO_XML.get(beginString);
         if (fixXml == null)
         {
-            return false;
+            return Optional.empty();
         }
-        parseFixXmlResource(fixXml);
-        if (! beginString.startsWith(FixVersions.FIXT_SESSION_PREFIX))
+        fixXmls.add(fixXml);
+        if (beginString.startsWith(FixVersions.FIXT_SESSION_PREFIX))
         {
-            return true;
+            final Matcher applVerIdMatcher = APPLVERID.matcher(fixMsg);
+            if (applVerIdMatcher.find())
+            {
+                final String applVerId = applVerIdMatcher.group(1);
+                final String dataDictFixXml = APPLVER_TO_XML.get(applVerId);
+                if (dataDictFixXml != null)
+                {
+                    fixXmls.add(dataDictFixXml);
+                }
+            }
         }
 
-        final Matcher applVerIdMatcher = APPLVERID.matcher(fixMsg);
-        if (! applVerIdMatcher.find())
-        {
-            return false;
-        }
-
-        final String applVerId = applVerIdMatcher.group(1);
-        final String dataDictFixXml = APPLVER_TO_XML.get(applVerId);
-        if (dataDictFixXml == null)
-        {
-            return false;
-        }
-
-        parseFixXmlResource(dataDictFixXml);
-        return true;
+        return Optional.of(parseFixXmlsResource(fixXmls.toArray(new String[0])));
     }
 
-    private void parseFixXmlResource(final String dataDictFixXml)
+    private FIXPreProcessor parseFixXmlsResource(final String[] fixFileLocations)
+            throws IOException, SAXException, ParserConfigurationException, XPathExpressionException
     {
-//        try (final InputStream inputReader = this.getClass().getResourceAsStream ("/" + dataDictFixXml))
-//        {
-//            final Document document = new FIXPreProcessor().preProcessFields(inputReader);
-//            final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
-//            FIXPreProcessor.populateFields(nodeList, fields, fieldsNameToId, fieldsIdToType, enums);
-//        }
-//        catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
-//        {
-//            throw new IllegalStateException("Could not parse FIX XML: " + dataDictFixXml, e);
-//        }
+        final List<InputStream> inputStreams = new ArrayList<>();
+        try
+        {
+            for (final String fixFileLocation : fixFileLocations)
+            {
+                inputStreams.add(new FileInputStream(fixFileLocation));
+            }
+            return new FIXPreProcessor(inputStreams.toArray(new InputStream[0]));
+        }
+        finally
+        {
+            for (final InputStream inputStream : inputStreams)
+            {
+                inputStream.close();
+            }
+        }
     }
 
     private void parseFixXml(final String[] fixFileLocations)

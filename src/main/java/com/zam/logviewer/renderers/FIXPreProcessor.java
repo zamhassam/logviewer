@@ -50,7 +50,6 @@ class FIXPreProcessor
 
     FixFieldNode getFixTreeRoot(final String messageTypeKey)
     {
-
         return messageToFixTree.get(messageTypeKey);
     }
 
