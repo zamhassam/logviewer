@@ -56,6 +56,42 @@ public class FIXRendererTest
     }
 
     @Test
+    public void shouldRenderBadGroups()
+    {
+        final List<String>
+                actual =
+                fixRenderer.renderBottomPaneContents(
+                        "8=FIX.4.4|9=196|35=X|49=A|56=B|34=12|52=20100318-03:21:11.364|262=A|268=2|279=0|269=0|" +
+                        "278=BID|55=EUR/USD|270=1.37215|15=EUR|271=2500000|346=1|279=0|269=1|11=FakeId|12=FakeNumber|" +
+                        "346=1|10=171|");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--TargetCompID[56] = B");
+        expected.add("|--MsgSeqNum[34] = 12");
+        expected.add("|--SendingTime[52] = 20100318-03:21:11.364");
+        expected.add("|--MDReqID[262] = A");
+        expected.add("|--NoMDEntries[268] = 2");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = BID[0]");
+        expected.add("  |--MDEntryID[278] = BID");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37215");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  |--MDEntrySize[271] = 2500000");
+        expected.add("  |--NumberOfOrders[346] = 1");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = OFFER[1]");
+        expected.add("*--ClOrdID[11] = FakeId");
+        expected.add("*--Commission[12] = FakeNumber");
+        expected.add("*--NumberOfOrders[346] = 1");
+        expected.add("*--CheckSum[10] = 171");
+        assertThat(actual, is(expected));
+    }
+
+    @Test
     public void shouldRenderFixMsgWithNestedGroups()
     {
         final List<String>
@@ -226,8 +262,9 @@ public class FIXRendererTest
         final FIXRenderer fixRenderer = new FIXRenderer(fixXml.toString());
         final List<String>
                 actual =
-                fixRenderer.renderBottomPaneContents("8=FIX.CUSTOM\u000135=0\u000120006=1\u000120008=JUNIOR\u000120007=FRIDGE" +
-                                                     "\u000110=50\u0001");
+                fixRenderer.renderBottomPaneContents(
+                        "8=FIX.CUSTOM\u000135=0\u000120006=1\u000120008=JUNIOR\u000120007=FRIDGE" +
+                        "\u000110=50\u0001");
         final List<String> expected = new ArrayList<>();
         expected.add("+--BeginString[8] = FIX.CUSTOM");
         expected.add("|--MsgType[35] = fakemessagetype1[0]");

@@ -95,11 +95,18 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             return Collections.emptyList();
         }
         final StringBuilder builder = new StringBuilder();
-        renderFixFieldInLevel(fixPreProcessor.getFixTreeRoot(msgType.get().getVal()),
-                              fixFields,
-                              builder,
-                              0,
-                              0);
+        int endPos = renderFixFieldInLevel(fixPreProcessor.getFixTreeRoot(msgType.get().getVal()),
+                                                 fixFields,
+                                                 builder,
+                                                 0,
+                                                 0);
+
+        for (; endPos < fixFields.size(); endPos++)
+        {
+            builder.append("*--")
+                   .append(renderKeyValue(fixFields.get(endPos)))
+                   .append('\n');
+        }
         return Arrays.asList(builder.toString().split("\n"));
     }
 
