@@ -2,6 +2,7 @@ package com.zam.logviewer.renderers;
 
 import com.google.common.collect.ImmutableList;
 
+import com.google.common.collect.ImmutableMap;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -12,14 +13,12 @@ import javax.xml.xpath.XPathExpressionException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class FIXPreProcessor
 {
+    private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
     private static final String FIELDS_XPATH = "/fix/fields/field";
     private static final String COMPONENTS_XPATH = "/fix/components/component";
     private static final String MESSAGES_XPATH = "/fix/messages/message";
@@ -51,6 +50,16 @@ class FIXPreProcessor
     FixFieldNode getFixTreeRoot(final String messageTypeKey)
     {
         return messageToFixTree.get(messageTypeKey);
+    }
+
+    Optional<String> getEnumKeyRepr(final int fieldKey, final String enumValue)
+    {
+        return Optional.ofNullable(enums.getOrDefault(fieldKey, EMPTY_MAP).get(enumValue));
+    }
+
+    Optional<String> getFieldKeyRepr(final int fieldKey)
+    {
+        return Optional.ofNullable(fieldsIdToName.get(fieldKey));
     }
 
     private void preProcessFields(final List<Document> documents)

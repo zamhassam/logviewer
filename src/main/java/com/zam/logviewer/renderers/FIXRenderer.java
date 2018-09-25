@@ -20,22 +20,19 @@ public class FIXRenderer implements BottomPaneRenderer<String>
     private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
     private static final Map<String, String> BEGINSTRING_TO_XML = new HashMap<>();
     private static final Map<String, String> APPLVER_TO_XML = new HashMap<>();
-    private static final String FIELDS_XPATH = "/fix/fields/field";
-    private final Map<Integer, String> fields = new HashMap<>();
-    private final Map<Integer, Map<String, String>> enums = new HashMap<>();
 
     static
     {
-        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX40, "FIX40.xml");
-        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX41, "FIX41.xml");
-        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX42, "FIX42.xml");
-        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX43, "FIX43.xml");
-        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX44, "FIX44.xml");
-        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIXT11, "FIXT11.xml");
+        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX40, "/FIX40.xml");
+        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX41, "/FIX41.xml");
+        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX42, "/FIX42.xml");
+        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX43, "/FIX43.xml");
+        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIX44, "/FIX44.xml");
+        BEGINSTRING_TO_XML.put(FixVersions.BEGINSTRING_FIXT11, "/FIXT11.xml");
 
-        APPLVER_TO_XML.put(ApplVerID.FIX50, "FIX50.xml");
-        APPLVER_TO_XML.put(ApplVerID.FIX50SP1, "FIX50SP1.xml");
-        APPLVER_TO_XML.put(ApplVerID.FIX50SP2, "FIX50SP2.xml");
+        APPLVER_TO_XML.put(ApplVerID.FIX50, "/FIX50.xml");
+        APPLVER_TO_XML.put(ApplVerID.FIX50SP1, "/FIX50SP1.xml");
+        APPLVER_TO_XML.put(ApplVerID.FIX50SP2, "/FIX50SP2.xml");
     }
 
     private FIXPreProcessor fixPreProcessor;
@@ -47,7 +44,14 @@ public class FIXRenderer implements BottomPaneRenderer<String>
 
     public FIXRenderer(final String... fixFileLocation)
     {
-        parseFixXml(fixFileLocation);
+        try
+        {
+            fixPreProcessor = parseFixXmls(fixFileLocation);
+        }
+        catch (final IOException | SAXException | ParserConfigurationException | XPathExpressionException e)
+        {
+            throw new IllegalArgumentException("Could not process FIX XMLs:" + Arrays.toString(fixFileLocation), e);
+        }
     }
 
     @Override
@@ -59,35 +63,33 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             return Collections.emptyList();
         }
         final String fixMsg = fixMsgMatcher.group(1);
-        if (fields.isEmpty())
+        if (fixPreProcessor == null)
         {
+            final Optional<FIXPreProcessor> fixPreProcessor;
             try
             {
-                if (fixPreProcessor == null)
-                {
-                    final Optional<FIXPreProcessor> fixPreProcessor = guessAndPopulateFields(fixMsg);
-                    if (! fixPreProcessor.isPresent())
-                    {
-                        return Collections.emptyList();
-                    }
-                    this.fixPreProcessor = fixPreProcessor.get();
-                }
+                fixPreProcessor = guessAndPopulateFields(fixMsg);
             }
-            catch (SAXException | ParserConfigurationException | XPathExpressionException | IOException e)
+            catch (final SAXException | ParserConfigurationException | XPathExpressionException | IOException e)
             {
                 throw new IllegalStateException("Could not parse FIX XMLs.", e);
             }
+            if (!fixPreProcessor.isPresent())
+            {
+                return Collections.emptyList();
+            }
+            this.fixPreProcessor = fixPreProcessor.get();
         }
 
         final List<String> rows = new ArrayList<>();
         for (final String keyValue : fixMsg.split("[\\001|]"))
         {
-            rows.add(processKeyValue(keyValue));
+            rows.add(renderKeyValue(keyValue));
         }
         return rows;
     }
 
-    private String processKeyValue(final String keyValue)
+    private String renderKeyValue(final String keyValue)
     {
         final String[] keyValSplit = keyValue.split("=");
         if (keyValSplit.length != 2)
@@ -95,28 +97,23 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             return keyValue;
         }
 
-        final int key;
+        final int fieldKey;
         try
         {
-            key = Integer.parseInt(keyValSplit[0]);
+            fieldKey = Integer.parseInt(keyValSplit[0]);
         }
         catch (final NumberFormatException e)
         {
             return keyValue;
         }
 
-        final String val;
-        if (enums.containsKey(key) && enums.get(key).containsKey(keyValSplit[1]))
-        {
-            val = enums.get(key).get(keyValSplit[1]) + "[" + keyValSplit[1] + "]";
-        }
-        else
-        {
-            val = keyValSplit[1];
-        }
+        final String enumKey = keyValSplit[1];
+        final Optional<String> enumValue = fixPreProcessor.getEnumKeyRepr(fieldKey, enumKey);
+        final String enumRepr = enumValue.map(s -> s + "[" + enumKey + "]").orElse(enumKey);
 
-        final String keyRepr = fields.getOrDefault(key, keyValSplit[0]);
-        return keyRepr + "[" + keyValSplit[0] + "] = " + val;
+        final Optional<String> keyRepr = fixPreProcessor.getFieldKeyRepr(fieldKey);
+
+        return keyRepr.orElse(keyValSplit[0]) + "[" + keyValSplit[0] + "] = " + enumRepr;
     }
 
     private Optional<FIXPreProcessor> guessAndPopulateFields(final String fixMsg)
@@ -153,7 +150,28 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         return Optional.of(parseFixXmlsResource(fixXmls.toArray(new String[0])));
     }
 
-    private FIXPreProcessor parseFixXmlsResource(final String[] fixFileLocations)
+    private FIXPreProcessor parseFixXmlsResource(final String[] fixResourceLocations)
+            throws IOException, SAXException, ParserConfigurationException, XPathExpressionException
+    {
+        final List<InputStream> inputStreams = new ArrayList<>();
+        try
+        {
+            for (final String fixResourceLocation : fixResourceLocations)
+            {
+                inputStreams.add(this.getClass().getResourceAsStream(fixResourceLocation));
+            }
+            return new FIXPreProcessor(inputStreams.toArray(new InputStream[0]));
+        }
+        finally
+        {
+            for (final InputStream inputStream : inputStreams)
+            {
+                inputStream.close();
+            }
+        }
+    }
+
+    private FIXPreProcessor parseFixXmls(final String[] fixFileLocations)
             throws IOException, SAXException, ParserConfigurationException, XPathExpressionException
     {
         final List<InputStream> inputStreams = new ArrayList<>();
@@ -172,23 +190,6 @@ public class FIXRenderer implements BottomPaneRenderer<String>
                 inputStream.close();
             }
         }
-    }
-
-    private void parseFixXml(final String[] fixFileLocations)
-    {
-//        for (final String fixFileLocation : fixFileLocations)
-//        {
-//            try (final InputStream inputReader = new FileInputStream(fixFileLocation))
-//            {
-//                final Document document = new FIXPreProcessor().preProcessFields(inputReader);
-//                final NodeList nodeList = XmlFunctions.getNodeList(document, FIXRenderer.FIELDS_XPATH);
-//                FIXPreProcessor.populateFields(nodeList, fields, fieldsNameToId, fieldsIdToType, enums);
-//            }
-//            catch (final ParserConfigurationException | SAXException | IOException | XPathExpressionException | TransformerException e)
-//            {
-//                throw new IllegalStateException("Could not parse FIX XML: " + fixFileLocation, e);
-//            }
-//        }
     }
 
 }
