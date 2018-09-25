@@ -54,15 +54,40 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
-    @Override
-    public List<String> renderBottomPaneContents(final String line)
+    private Optional<String> findFixMsg(final String line)
     {
         final Matcher fixMsgMatcher = FIX_MSG.matcher(line);
         if (!fixMsgMatcher.find())
         {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(fixMsgMatcher.group(1));
+    }
+
+    @Override
+    public List<String> renderBottomPaneContents(final String line)
+    {
+        final Optional<String> fixMsg = findFixMsg(line);
+        if (! fixMsg.isPresent())
+        {
             return Collections.emptyList();
         }
-        final String fixMsg = fixMsgMatcher.group(1);
+        final FIXPreProcessor fixPreProcessor = getFixPreProcessor(fixMsg.get());
+        if (fixPreProcessor == null)
+        {
+            return Collections.emptyList();
+        }
+
+        final List<String> rows = new ArrayList<>();
+        for (final String keyValue : fixMsg.get().split("[\\001|]"))
+        {
+            rows.add(renderKeyValue(keyValue));
+        }
+        return rows;
+    }
+
+    private FIXPreProcessor getFixPreProcessor(final String fixMsg)
+    {
         if (fixPreProcessor == null)
         {
             final Optional<FIXPreProcessor> fixPreProcessor;
@@ -76,17 +101,11 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             }
             if (!fixPreProcessor.isPresent())
             {
-                return Collections.emptyList();
+                return null;
             }
             this.fixPreProcessor = fixPreProcessor.get();
         }
-
-        final List<String> rows = new ArrayList<>();
-        for (final String keyValue : fixMsg.split("[\\001|]"))
-        {
-            rows.add(renderKeyValue(keyValue));
-        }
-        return rows;
+        return this.fixPreProcessor;
     }
 
     private String renderKeyValue(final String keyValue)
