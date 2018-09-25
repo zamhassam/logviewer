@@ -72,8 +72,8 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         {
             return Collections.emptyList();
         }
-        final FIXPreProcessor fixPreProcessor = getFixPreProcessor(fixMsg.get());
-        if (fixPreProcessor == null)
+        final Optional<Object> fixPreProcessor = getFixPreProcessor(fixMsg.get());
+        if (!fixPreProcessor.isPresent())
         {
             return Collections.emptyList();
         }
@@ -86,7 +86,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         return rows;
     }
 
-    private FIXPreProcessor getFixPreProcessor(final String fixMsg)
+    private Optional<Object> getFixPreProcessor(final String fixMsg)
     {
         if (fixPreProcessor == null)
         {
@@ -101,11 +101,11 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             }
             if (!fixPreProcessor.isPresent())
             {
-                return null;
+                return Optional.empty();
             }
             this.fixPreProcessor = fixPreProcessor.get();
         }
-        return this.fixPreProcessor;
+        return Optional.of(this.fixPreProcessor);
     }
 
     private String renderKeyValue(final String keyValue)
