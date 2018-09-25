@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FIXRenderer implements BottomPaneRenderer<String>
 {
@@ -20,6 +21,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
     private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
     private static final Map<String, String> BEGINSTRING_TO_XML = new HashMap<>();
     private static final Map<String, String> APPLVER_TO_XML = new HashMap<>();
+    private static final int INDENT = 2;
 
     static
     {
@@ -68,7 +70,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
     public List<String> renderBottomPaneContents(final String line)
     {
         final Optional<String> fixMsg = findFixMsg(line);
-        if (! fixMsg.isPresent())
+        if (!fixMsg.isPresent())
         {
             return Collections.emptyList();
         }
@@ -78,12 +80,72 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             return Collections.emptyList();
         }
 
-        final List<String> rows = new ArrayList<>();
-        for (final String keyValue : fixMsg.get().split("[\\001|]"))
+        final List<FixPair> fixFields = Arrays.stream(fixMsg.get().split("[\\001|]"))
+                                              .map(s -> s.split("="))
+                                              .map(keyVal -> new FixPair(keyVal[0], keyVal[1]))
+                                              .collect(Collectors.toList());
+        return renderFixFields(fixFields);
+    }
+
+    private List<String> renderFixFields(final List<FixPair> fixFields)
+    {
+        final Optional<FixPair> msgType = fixFields.stream().filter(fixPair -> fixPair.getKeyInt() == 35).findFirst();
+        if (!msgType.isPresent())
         {
-            rows.add(renderKeyValue(keyValue));
+            return Collections.emptyList();
         }
-        return rows;
+        final StringBuilder builder = new StringBuilder();
+        renderFixFieldInLevel(fixPreProcessor.getFixTreeRoot(msgType.get().getVal()),
+                              fixFields,
+                              builder,
+                              0,
+                              0);
+        return Arrays.asList(builder.toString().split("\n"));
+    }
+
+    private static void repeatChar(final StringBuilder builder, final char c, final int repeat)
+    {
+        for (int i = 0; i < repeat; i++)
+        {
+            builder.append(c);
+        }
+    }
+
+    private int renderFixFieldInLevel(final FIXPreProcessor.FixFieldNode level,
+                                      final List<FixPair> fixFields,
+                                      final StringBuilder builder,
+                                      final int indentation,
+                                      int pos)
+    {
+        if (pos == fixFields.size() - 1)
+        {
+            return pos;
+        }
+
+        boolean first = true;
+        final String firstInGroup = fixFields.get(pos).getKey();
+        while (pos < fixFields.size())
+        {
+            final FixPair fixPair = fixFields.get(pos);
+            final FIXPreProcessor.FixFieldNode parentNode = level.getChildren().get(fixPair.getKeyInt());
+            if (parentNode == null)
+            {
+                return pos;
+            }
+            repeatChar(builder, ' ', indentation);
+            final boolean startOfGroup = first || fixPair.getKey().equals(firstInGroup);
+            builder.append(startOfGroup ? '+' : '|');
+            first = false;
+            repeatChar(builder, '-', 2);
+            builder.append(renderKeyValue(fixPair));
+            builder.append('\n');
+            ++pos;
+            if (parentNode.hasChildren())
+            {
+                pos = renderFixFieldInLevel(parentNode, fixFields, builder, indentation + INDENT, pos);
+            }
+        }
+        return pos;
     }
 
     private Optional<Object> getFixPreProcessor(final String fixMsg)
@@ -108,31 +170,16 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         return Optional.of(this.fixPreProcessor);
     }
 
-    private String renderKeyValue(final String keyValue)
+    private String renderKeyValue(final FixPair fixPair)
     {
-        final String[] keyValSplit = keyValue.split("=");
-        if (keyValSplit.length != 2)
-        {
-            return keyValue;
-        }
-
-        final int fieldKey;
-        try
-        {
-            fieldKey = Integer.parseInt(keyValSplit[0]);
-        }
-        catch (final NumberFormatException e)
-        {
-            return keyValue;
-        }
-
-        final String enumKey = keyValSplit[1];
+        final int fieldKey = fixPair.getKeyInt();
+        final String enumKey = fixPair.getVal();
         final Optional<String> enumValue = fixPreProcessor.getEnumKeyRepr(fieldKey, enumKey);
         final String enumRepr = enumValue.map(s -> s + "[" + enumKey + "]").orElse(enumKey);
 
         final Optional<String> keyRepr = fixPreProcessor.getFieldKeyRepr(fieldKey);
 
-        return keyRepr.orElse(keyValSplit[0]) + "[" + keyValSplit[0] + "] = " + enumRepr;
+        return keyRepr.orElse(fixPair.getKey()) + "[" + fixPair.getKey() + "] = " + enumRepr;
     }
 
     private Optional<FIXPreProcessor> guessAndPopulateFields(final String fixMsg)

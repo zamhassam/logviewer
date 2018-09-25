@@ -51,7 +51,7 @@ public class FIXRendererTest
         expected.add("  |--Currency[15] = EUR");
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
-        expected.add("|CheckSum[10] = 171");
+        expected.add("|--CheckSum[10] = 171");
         assertThat(actual, is(expected));
     }
 
@@ -95,7 +95,7 @@ public class FIXRendererTest
         expected.add("  |--Currency[15] = EUR");
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
-        expected.add("|CheckSum[10] = 171");
+        expected.add("|--CheckSum[10] = 171");
         assertThat(actual, is(expected));
     }
 
@@ -133,7 +133,7 @@ public class FIXRendererTest
         expected.add("  |--Currency[15] = EUR");
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
-        expected.add("CheckSum[10] = 171");
+        expected.add("|--CheckSum[10] = 171");
         assertThat(actual, is(expected));
     }
 
@@ -173,7 +173,7 @@ public class FIXRendererTest
         expected.add("  |--Currency[15] = EUR");
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
-        expected.add("CheckSum[10] = 171");
+        expected.add("|--CheckSum[10] = 171");
         assertThat(actual, is(expected));
     }
 
@@ -189,6 +189,18 @@ public class FIXRendererTest
     {
 
         final String fixXmlStr = "<fix>\n" +
+                                 "  <messages>\n" +
+                                 "    <message name=\"fakemessagetype1\" msgtype=\"0\" msgcat=\"app\">\n" +
+                                 "      <field name=\"MsgType\" required=\"Y\"/>\n" +
+                                 "      <field name=\"BeginString\" required=\"Y\"/>\n" +
+                                 "      <field name=\"BodyLength\" required=\"Y\"/>\n" +
+                                 "      <field name=\"CheckSum\" required=\"Y\"/>\n" +
+                                 "      <field name=\"FakeEnum\" required=\"Y\"/>\n" +
+                                 "      <field name=\"FakeField1\" required=\"N\"/>\n" +
+                                 "      <field name=\"FakeField2\" required=\"N\"/>\n" +
+                                 "      <field name=\"FakeField3\" required=\"N\"/>\n" +
+                                 "    </message>\n" +
+                                 "  </messages>\n" +
                                  "  <fields>\n" +
                                  "    <field number=\"8\" name=\"BeginString\" type=\"STRING\"/>\n" +
                                  "    <field number=\"9\" name=\"BodyLength\" type=\"LENGTH\"/>\n" +
@@ -197,6 +209,11 @@ public class FIXRendererTest
                                  "      <value enum=\"0\" description=\"Fake1\"/>\n" +
                                  "      <value enum=\"1\" description=\"Fake2\"/>\n" +
                                  "      <value enum=\"2\" description=\"Fake3\"/>\n" +
+                                 "    </field>\n" +
+                                 "    <field number=\"35\" name=\"MsgType\" type=\"STRING\">\n" +
+                                 "      <value enum=\"0\" description=\"fakemessagetype1\"/>\n" +
+                                 "      <value enum=\"1\" description=\"fakemessagetype2\"/>\n" +
+                                 "      <value enum=\"2\" description=\"fakemessagetype3\"/>\n" +
                                  "    </field>\n" +
                                  "    <field number=\"20007\" name=\"FakeField1\" type=\"CURRENCY\"/>\n" +
                                  "    <field number=\"20008\" name=\"FakeField2\" type=\"NUMINGROUP\"/>\n" +
@@ -209,10 +226,11 @@ public class FIXRendererTest
         final FIXRenderer fixRenderer = new FIXRenderer(fixXml.toString());
         final List<String>
                 actual =
-                fixRenderer.renderBottomPaneContents("8=FIX.CUSTOM\u000120006=1\u000120008=JUNIOR\u000120007=FRIDGE" +
+                fixRenderer.renderBottomPaneContents("8=FIX.CUSTOM\u000135=0\u000120006=1\u000120008=JUNIOR\u000120007=FRIDGE" +
                                                      "\u000110=50\u0001");
         final List<String> expected = new ArrayList<>();
         expected.add("+--BeginString[8] = FIX.CUSTOM");
+        expected.add("|--MsgType[35] = fakemessagetype1[0]");
         expected.add("|--FakeEnum[20006] = Fake2[1]");
         expected.add("|--FakeField2[20008] = JUNIOR");
         expected.add("|--FakeField1[20007] = FRIDGE");
