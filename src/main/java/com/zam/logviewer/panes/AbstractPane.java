@@ -6,6 +6,8 @@ import com.zam.logviewer.terminallines.TerminalLines;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public abstract class AbstractPane<UnderlyingData> implements Pane
 {
@@ -42,24 +44,40 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
 
     private boolean advanceByOneLine(final boolean reverse) throws IOException
     {
-        final Optional<Node<UnderlyingData>> node = reverse ?
-                                                    terminalLines.prevNode(terminalLines.getCurrentLineNode()) :
-                                                    terminalLines.nextNode(terminalLines.getCurrentLineNode());
+        final Function<Node<UnderlyingData>, Optional<Node<UnderlyingData>>> next;
+        final Supplier<Node<UnderlyingData>> edgeNode;
+        final int step;
+        if (reverse)
+        {
+            next = terminalLines::prevNode;
+            edgeNode = terminalLines::getTopLineNode;
+            step = -1;
+        }
+        else
+        {
+            next = terminalLines::nextNode;
+            edgeNode = terminalLines::getBottomLineNode;
+            step = +1;
+        }
+        return advanceByOneLine(next, edgeNode, step);
+    }
+
+    private boolean advanceByOneLine(final Function<Node<UnderlyingData>, Optional<Node<UnderlyingData>>> next,
+                                     final Supplier<Node<UnderlyingData>> edgeNode,
+                                     final int step) throws IOException
+    {
+        final Optional<Node<UnderlyingData>> node = next.apply(terminalLines.getCurrentLineNode());
         if (!node.isPresent())
         {
             screen.bell();
             return true;
         }
-        if (terminalLines.getCurrentLineNode().getRow() == (reverse ?
-                                                            terminalLines.getTopLineNode().getRow() :
-                                                            terminalLines.getBottomLineNode().getRow()))
+        if (terminalLines.getCurrentLineNode().getRow() == edgeNode.get().getRow())
         {
             return true;
         }
         terminalLines.setCurrentLineNode(node.get());
-        setCursorPosition(screen.getCursorRow() + (reverse ?
-                                                   -1 :
-                                                   +1));
+        setCursorPosition(screen.getCursorRow() + step);
         return false;
     }
 
