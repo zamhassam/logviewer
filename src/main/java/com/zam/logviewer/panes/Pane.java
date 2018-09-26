@@ -12,6 +12,8 @@ public interface Pane
 
     void onUpArrow() throws IOException;
 
+    void onEnter() throws IOException;
+
     void onSelected() throws IOException;
 
     void onResized();

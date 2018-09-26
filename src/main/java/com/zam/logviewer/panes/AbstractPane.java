@@ -64,6 +64,30 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
     }
 
     @Override
+    public void onEnter() throws IOException
+    {
+        while (true)
+        {
+            final Optional<Node<UnderlyingData>> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
+            if (!node.isPresent())
+            {
+                screen.bell();
+                return;
+            }
+            if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
+            {
+                break;
+            }
+            else
+            {
+                terminalLines.setCurrentLineNode(node.get());
+                setCursorPosition(lastKnownRow + 1);
+            }
+        }
+        redrawScreen();
+    }
+
+    @Override
     public void onSelected()
     {
         screen.setCursorPosition(lastKnownRow);

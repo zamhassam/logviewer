@@ -36,6 +36,13 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
         bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
     }
 
+    @Override
+    public void onEnter() throws IOException
+    {
+        super.onEnter();
+        bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
+    }
+
     int getFirstRow()
     {
         return screen.getFirstRowOfTopPane();

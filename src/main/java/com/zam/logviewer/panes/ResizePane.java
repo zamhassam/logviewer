@@ -4,6 +4,8 @@ import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.zam.logviewer.LogViewerScreen;
 
+import java.io.IOException;
+
 public class ResizePane implements Pane
 {
     private final LogViewerScreen screen;
@@ -25,6 +27,12 @@ public class ResizePane implements Pane
     {
         screen.setRowSplitOffset(screen.getRowSplitOffset() - 1);
         redrawScreen();
+    }
+
+    @Override
+    public void onEnter() throws IOException
+    {
+
     }
 
     @Override

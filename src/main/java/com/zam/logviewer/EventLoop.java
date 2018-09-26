@@ -1,7 +1,6 @@
 package com.zam.logviewer;
 
 import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.terminal.TerminalResizeListener;
 import com.zam.logviewer.panes.Pane;
 import com.zam.logviewer.states.State;
 import com.zam.logviewer.states.TerminatedState;

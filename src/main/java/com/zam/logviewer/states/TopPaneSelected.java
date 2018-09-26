@@ -55,6 +55,11 @@ public class TopPaneSelected<UnderlyingData> implements State
                 topPane.onSelected();
                 logViewerScreen.refresh();
                 return this;
+            case Enter:
+                topPane.onEnter();
+                topPane.onSelected();
+                logViewerScreen.refresh();
+                return this;
             case Escape:
                 return terminatedState;
             case Tab:

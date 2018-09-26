@@ -48,12 +48,15 @@ public class BottomPaneSelected<UnderlyingData> implements State
             case ArrowDown:
                 bottomPane.onDownArrow();
                 bottomPane.onSelected();
-                bottomPane.onSelected();
                 logViewerScreen.refresh();
                 return this;
             case ArrowUp:
                 bottomPane.onUpArrow();
                 bottomPane.onSelected();
+                logViewerScreen.refresh();
+                return this;
+            case Enter:
+                bottomPane.onEnter();
                 bottomPane.onSelected();
                 logViewerScreen.refresh();
                 return this;
