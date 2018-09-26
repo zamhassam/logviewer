@@ -1,8 +1,5 @@
 package com.zam.logviewer.panes;
 
-import com.googlecode.lanterna.TerminalSize;
-import com.googlecode.lanterna.terminal.Terminal;
-import com.googlecode.lanterna.terminal.TerminalResizeListener;
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.terminallines.Node;
 import com.zam.logviewer.terminallines.TerminalLines;
@@ -26,41 +23,44 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
     @Override
     public void onDownArrow() throws IOException
     {
-        final Optional<Node<UnderlyingData>> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
-        if (!node.isPresent())
-        {
-            screen.bell();
-            return;
-        }
-        if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
+        final boolean pageEndReached = advanceByOneLine(false);
+        if (pageEndReached)
         {
             redrawScreen();
-        }
-        else
-        {
-            terminalLines.setCurrentLineNode(node.get());
-            setCursorPosition(screen.getCursorRow() + 1);
         }
     }
 
     @Override
     public void onUpArrow() throws IOException
     {
-        final Optional<Node<UnderlyingData>> node = terminalLines.prevNode(terminalLines.getCurrentLineNode());
-        if (!node.isPresent())
-        {
-            screen.bell();
-            return;
-        }
-        if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getTopLineNode().getRow())
+        final boolean pageEndReached = advanceByOneLine(true);
+        if (pageEndReached)
         {
             redrawScreen();
         }
-        else
+    }
+
+    private boolean advanceByOneLine(final boolean reverse) throws IOException
+    {
+        final Optional<Node<UnderlyingData>> node = reverse ?
+                                                    terminalLines.prevNode(terminalLines.getCurrentLineNode()) :
+                                                    terminalLines.nextNode(terminalLines.getCurrentLineNode());
+        if (!node.isPresent())
         {
-            terminalLines.setCurrentLineNode(node.get());
-            setCursorPosition(screen.getCursorRow() - 1);
+            screen.bell();
+            return true;
         }
+        if (terminalLines.getCurrentLineNode().getRow() == (reverse ?
+                                                            terminalLines.getTopLineNode().getRow() :
+                                                            terminalLines.getBottomLineNode().getRow()))
+        {
+            return true;
+        }
+        terminalLines.setCurrentLineNode(node.get());
+        setCursorPosition(screen.getCursorRow() + (reverse ?
+                                                   -1 :
+                                                   +1));
+        return false;
     }
 
     @Override
@@ -68,20 +68,10 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
     {
         while (true)
         {
-            final Optional<Node<UnderlyingData>> node = terminalLines.nextNode(terminalLines.getCurrentLineNode());
-            if (!node.isPresent())
-            {
-                screen.bell();
-                return;
-            }
-            if (terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow())
+            final boolean pageEndReached = advanceByOneLine(false);
+            if (pageEndReached)
             {
                 break;
-            }
-            else
-            {
-                terminalLines.setCurrentLineNode(node.get());
-                setCursorPosition(lastKnownRow + 1);
             }
         }
         redrawScreen();
