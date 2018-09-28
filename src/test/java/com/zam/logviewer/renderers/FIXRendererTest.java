@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -15,6 +16,39 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class FIXRendererTest
 {
     private final FIXRenderer fixRenderer = new FIXRenderer();
+
+    @Test
+    public void shouldntRenderInvalidFix()
+    {
+        final List<String>
+                actual =
+                fixRenderer.renderBottomPaneContents(
+                        "8=FIX.4.4|9=196|35=X||49=A|10=171|");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--CheckSum[10] = 171");
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void shouldntRenderInvalidFixKey()
+    {
+        final List<String>
+                actual =
+                fixRenderer.renderBottomPaneContents(
+                        "8=FIX.4.4|9=196|35=X|200023=A|49=A|10=171|");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("*--200023[200023] = A");
+        expected.add("*--SenderCompID[49] = A");
+        expected.add("*--CheckSum[10] = 171");
+        assertThat(actual, is(expected));
+    }
 
     @Test
     public void shouldRenderFixMsgWithPipeDelimiter()

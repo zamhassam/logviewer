@@ -1,5 +1,6 @@
 package com.zam.logviewer.renderers;
 
+import org.apache.logging.log4j.Logger;
 import org.xml.sax.SAXException;
 import quickfix.FixVersions;
 import quickfix.field.ApplVerID;
@@ -14,11 +15,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class FIXRenderer implements BottomPaneRenderer<String>
 {
+    private static final Logger LOGGER = getLogger();
     private static final Pattern FIX_MSG = Pattern.compile("^.*[^\\d]*(8=FIX.*[\\001|].*[\\001|]).*$");
     private static final Pattern BEGINSTRING = Pattern.compile("8=(FIX.*?)[\\001|].*.*$");
     private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
+    private static final Pattern VALID_FIX_FIELD = Pattern.compile("\\S+=\\S+");
     private static final Map<String, String> BEGINSTRING_TO_XML = new HashMap<>();
     private static final Map<String, String> APPLVER_TO_XML = new HashMap<>();
     private static final int INDENT = 2;
@@ -79,12 +84,20 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         {
             return Collections.emptyList();
         }
-
-        final List<FixPair> fixFields = Arrays.stream(fixMsg.get().split("[\\001|]"))
-                                              .map(s -> s.split("="))
-                                              .map(keyVal -> new FixPair(keyVal[0], keyVal[1]))
-                                              .collect(Collectors.toList());
-        return renderFixFields(fixFields);
+        try
+        {
+            final List<FixPair> fixFields = Arrays.stream(fixMsg.get().split("[\\001|]"))
+                    .filter(s -> VALID_FIX_FIELD.matcher(s).find())
+                    .map(s -> s.split("="))
+                    .map(keyVal -> new FixPair(keyVal[0], keyVal[1]))
+                    .collect(Collectors.toList());
+            return renderFixFields(fixFields);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Could not process the FIX message: " + line, e);
+            return Collections.emptyList();
+        }
     }
 
     private List<String> renderFixFields(final List<FixPair> fixFields)
