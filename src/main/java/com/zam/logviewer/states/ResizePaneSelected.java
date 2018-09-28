@@ -72,6 +72,9 @@ public class ResizePaneSelected<UnderlyingData> implements State
             case Tab:
                 nextState.init();
                 return nextState;
+            case Character:
+                resizePane.onCharacter(keyStroke.getCharacter());
+                return this;
             default:
                 return this;
         }

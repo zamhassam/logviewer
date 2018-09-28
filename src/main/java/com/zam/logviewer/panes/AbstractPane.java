@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public abstract class AbstractPane<UnderlyingData> implements Pane
 {

@@ -66,7 +66,7 @@ public class Main
                     bottomPane = new BottomPane<>(logViewerScreen, new ListTerminalLines(), fixRenderer);
             final TopPane<String>
                     topPane = new TopPane<>(logViewerScreen, terminalLines, bottomPane);
-            final ResizePane resizePane = new ResizePane(logViewerScreen);
+            final ResizePane resizePane = new ResizePane(logViewerScreen, topPane);
             bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
 
             final BlockingQueue<EventLoop.Event> events = new LinkedBlockingQueue<>();

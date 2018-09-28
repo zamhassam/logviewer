@@ -1,11 +1,15 @@
 package com.zam.logviewer.panes;
 
 import com.zam.logviewer.LogViewerScreen;
+import com.zam.logviewer.terminallines.Node;
 import com.zam.logviewer.terminallines.TerminalLines;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
-public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
+public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData> implements TextSearchPane<UnderlyingData>
 {
     private final LogViewerScreen screen;
     private final TerminalLines<UnderlyingData> terminalLines;
@@ -20,6 +24,48 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData>
         this.terminalLines = terminalLines;
         this.bottomPane = bottomPane;
         redrawScreen();
+    }
+
+    @Override
+    public Optional<Integer> findPrevOccurrenceOffset(final Pattern pattern)
+    {
+        return findOccurrenceOffset(terminalLines::prevNode, pattern);
+    }
+
+    @Override
+    public Optional<Integer> findNextOccurrenceOffset(final Pattern pattern)
+    {
+        return findOccurrenceOffset(terminalLines::nextNode, pattern);
+    }
+
+    private Optional<Integer> findOccurrenceOffset(final Function<Node<UnderlyingData>, Optional<Node<UnderlyingData>>> iter, final Pattern pattern)
+    {
+        final Node<UnderlyingData> cur = terminalLines.getCurrentLineNode();
+        Optional<Node<UnderlyingData>> next;
+        for (int i = 1; (next = iter.apply(cur)).isPresent(); i++)
+        {
+            if (pattern.matcher(next.get().getRenderedData()).find())
+            {
+                return Optional.of(i);
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public void advanceByLines(final int n, final boolean reverse) throws IOException
+    {
+        for (int i = 0; i < n; i++)
+        {
+            if (reverse)
+            {
+                onUpArrow();
+            }
+            else
+            {
+                onDownArrow();
+            }
+        }
     }
 
     @Override
