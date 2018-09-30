@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData> implements TextSearchPane<UnderlyingData>
+public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData> implements TextSearchPane
 {
     private final LogViewerScreen screen;
     private final TerminalLines<UnderlyingData> terminalLines;

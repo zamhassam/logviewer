@@ -78,4 +78,9 @@ public class ResizePane implements Pane
             return;
         }
     }
+
+    public void onBackspace()
+    {
+
+    }
 }

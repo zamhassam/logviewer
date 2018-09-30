@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public interface TextSearchPane<UnderlyingData>
+public interface TextSearchPane
 {
     Optional<Integer> findPrevOccurrenceOffset(Pattern pattern);
 
