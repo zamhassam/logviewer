@@ -7,7 +7,7 @@ import com.googlecode.lanterna.terminal.Terminal;
 
 import java.io.IOException;
 
-public final class LogViewerScreen
+public class LogViewerScreen
 {
     private final Terminal terminal;
     private final Screen screen;

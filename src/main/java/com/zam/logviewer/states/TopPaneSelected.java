@@ -1,10 +1,10 @@
 package com.zam.logviewer.states;
 
+import java.io.IOException;
+
 import com.googlecode.lanterna.input.KeyStroke;
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.panes.TopPane;
-
-import java.io.IOException;
 
 public class TopPaneSelected<UnderlyingData> implements State
 {
@@ -39,34 +39,31 @@ public class TopPaneSelected<UnderlyingData> implements State
     @Override
     public State onEvent(final KeyStroke keyStroke) throws IOException
     {
-        if (keyStroke.getKeyType() == null)
+        if (keyStroke.getKeyType() != null)
         {
-            return this;
+            switch (keyStroke.getKeyType())
+            {
+                case ArrowDown:
+                    topPane.onDownArrow();
+                    topPane.onSelected();
+                    logViewerScreen.refresh();
+                    return this;
+                case ArrowUp:
+                    topPane.onUpArrow();
+                    topPane.onSelected();
+                    logViewerScreen.refresh();
+                    return this;
+                case Escape:
+                    return terminatedState;
+                case Tab:
+                    nextState.init();
+                    return nextState;
+                default:
+                    return this;
+            }
         }
-        switch (keyStroke.getKeyType())
-        {
-            case ArrowDown:
-                topPane.onDownArrow();
-                topPane.onSelected();
-                logViewerScreen.refresh();
-                return this;
-            case ArrowUp:
-                topPane.onUpArrow();
-                topPane.onSelected();
-                logViewerScreen.refresh();
-                return this;
-            case Enter:
-                topPane.onEnter();
-                topPane.onSelected();
-                logViewerScreen.refresh();
-                return this;
-            case Escape:
-                return terminatedState;
-            case Tab:
-                nextState.init();
-                return nextState;
-            default:
-                return this;
-        }
+        topPane.onKeyStroke(keyStroke);
+        logViewerScreen.refresh();
+        return this;
     }
 }

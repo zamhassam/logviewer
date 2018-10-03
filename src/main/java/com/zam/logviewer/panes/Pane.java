@@ -1,6 +1,7 @@
 package com.zam.logviewer.panes;
 
 import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.terminal.TerminalResizeListener;
 
@@ -12,11 +13,11 @@ public interface Pane
 
     void onUpArrow() throws IOException;
 
-    void onEnter() throws IOException;
-
     void onSelected() throws IOException;
 
     void onResized();
 
     void redrawScreen() throws IOException;
+
+    void onKeyStroke(KeyStroke keyStroke) throws IOException;
 }

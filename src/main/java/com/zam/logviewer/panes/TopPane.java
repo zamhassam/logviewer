@@ -1,5 +1,6 @@
 package com.zam.logviewer.panes;
 
+import com.googlecode.lanterna.input.KeyStroke;
 import com.zam.logviewer.LogViewerScreen;
 import com.zam.logviewer.terminallines.Node;
 import com.zam.logviewer.terminallines.TerminalLines;
@@ -27,15 +28,15 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData> 
     }
 
     @Override
-    public Optional<Integer> findPrevOccurrenceOffset(final Pattern pattern)
+    public Optional<Integer> findPrevOccurrenceOffset(final String pattern)
     {
-        return findOccurrenceOffset(terminalLines::prevNode, pattern);
+        return findOccurrenceOffset(terminalLines::prevNode, Pattern.compile(pattern));
     }
 
     @Override
-    public Optional<Integer> findNextOccurrenceOffset(final Pattern pattern)
+    public Optional<Integer> findNextOccurrenceOffset(final String pattern)
     {
-        return findOccurrenceOffset(terminalLines::nextNode, pattern);
+        return findOccurrenceOffset(terminalLines::nextNode, Pattern.compile(pattern));
     }
 
     private Optional<Integer> findOccurrenceOffset(final Function<Node<UnderlyingData>, Optional<Node<UnderlyingData>>> iter, final Pattern pattern)
@@ -83,10 +84,14 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData> 
     }
 
     @Override
-    public void onEnter() throws IOException
+    public void onKeyStroke(final KeyStroke keyStroke) throws IOException
     {
-        super.onEnter();
-        bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
+        final int curRow = terminalLines.getCurrentLineNode().getRow();
+        super.onKeyStroke(keyStroke);
+        if (terminalLines.getCurrentLineNode().getRow() != curRow)
+        {
+            bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
+        }
     }
 
     int getFirstRow()

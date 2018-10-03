@@ -39,34 +39,31 @@ public class BottomPaneSelected<UnderlyingData> implements State
     @Override
     public State onEvent(final KeyStroke keyStroke) throws IOException
     {
-        if (keyStroke.getKeyType() == null)
+        if (keyStroke.getKeyType() != null)
         {
-            return this;
+            switch (keyStroke.getKeyType())
+            {
+                case ArrowDown:
+                    bottomPane.onDownArrow();
+                    bottomPane.onSelected();
+                    logViewerScreen.refresh();
+                    return this;
+                case ArrowUp:
+                    bottomPane.onUpArrow();
+                    bottomPane.onSelected();
+                    logViewerScreen.refresh();
+                    return this;
+                case Escape:
+                    return terminatedState;
+                case Tab:
+                    nextState.init();
+                    return nextState;
+                default:
+                    return this;
+            }
         }
-        switch (keyStroke.getKeyType())
-        {
-            case ArrowDown:
-                bottomPane.onDownArrow();
-                bottomPane.onSelected();
-                logViewerScreen.refresh();
-                return this;
-            case ArrowUp:
-                bottomPane.onUpArrow();
-                bottomPane.onSelected();
-                logViewerScreen.refresh();
-                return this;
-            case Enter:
-                bottomPane.onEnter();
-                bottomPane.onSelected();
-                logViewerScreen.refresh();
-                return this;
-            case Escape:
-                return terminatedState;
-            case Tab:
-                nextState.init();
-                return nextState;
-            default:
-                return this;
-        }
+        bottomPane.onKeyStroke(keyStroke);
+        logViewerScreen.refresh();
+        return this;
     }
 }

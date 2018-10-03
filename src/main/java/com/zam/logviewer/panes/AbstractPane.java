@@ -1,14 +1,14 @@
 package com.zam.logviewer.panes;
 
-import com.zam.logviewer.LogViewerScreen;
-import com.zam.logviewer.terminallines.Node;
-import com.zam.logviewer.terminallines.TerminalLines;
-
 import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
+
+import com.googlecode.lanterna.input.KeyStroke;
+import com.zam.logviewer.LogViewerScreen;
+import com.zam.logviewer.terminallines.Node;
+import com.zam.logviewer.terminallines.TerminalLines;
 
 public abstract class AbstractPane<UnderlyingData> implements Pane
 {
@@ -83,7 +83,7 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
     }
 
     @Override
-    public void onEnter() throws IOException
+    public void onKeyStroke(final KeyStroke keyStroke) throws IOException
     {
         while (true)
         {
@@ -115,7 +115,7 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
                            terminalLines.getCurrentLineNode().getRow() == terminalLines.getBottomLineNode().getRow();
 
         final int totalRowCount = getLastRow() - getFirstRow();
-        final int biggerPercent = (int) (totalRowCount * PERCENT_OF_SCREEN_ABOVE);
+        final int biggerPercent = (int)(totalRowCount * PERCENT_OF_SCREEN_ABOVE);
         final int topSectionRowCount;
         final int selectedRowCount;
         final int bottomSectionRowCount;
