@@ -43,7 +43,7 @@ public class ResizePane implements Pane
 
     public void onKeyType(final KeyStroke keyType)
     {
-        keyType
+        //keyType
     }
 
     @Override

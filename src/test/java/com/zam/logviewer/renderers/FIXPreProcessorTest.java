@@ -8,6 +8,7 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -250,5 +251,47 @@ public class FIXPreProcessorTest
         assertThat(ioiTransType.hasChildren(), is(false));
         assertThat(ioiTransType.getFieldName(), is("IOITransType"));
         assertThat(ioiTransType.getKey(), is(28));
+    }
+
+    @Test
+    public void generateEnumValues() throws
+            SAXException,
+            ParserConfigurationException,
+            XPathExpressionException,
+            IOException
+    {
+        final String input =
+                "<fix>" +
+                "<header>" +
+                "<field name=\"header\" required=\"Y\"/>" +
+                "</header>" +
+                "<trailer>" +
+                "<field name=\"trailer\" required=\"Y\"/>" +
+                "</trailer>" +
+                "<messages>" +
+                "<message name=\"IOI\" msgtype=\"6\" msgcat=\"app\">" +
+                "<field name=\"IOITransType\" required=\"Y\"/>" +
+                "<field name=\"IOIID\" required=\"Y\"/>" +
+                "</message>" +
+                "</messages>" +
+                "<fields>" +
+                "<field number=\"23\" name=\"IOIID\" type=\"STRING\"/>" +
+                "<field number=\"1\" name=\"header\" type=\"STRING\"/>" +
+                "<field number=\"2\" name=\"trailer\" type=\"STRING\"/>" +
+                "<field number=\"28\" name=\"IOITransType\" type=\"CHAR\">" +
+                "<value enum=\"N\" description=\"NEW\"/>" +
+                "<value enum=\"C\" description=\"CANCEL\"/>" +
+                "<value enum=\"R\" description=\"REPLACE\"/>" +
+                "</field>" +
+                "</fields>" +
+                "</fix>";
+        final FIXPreProcessor
+                fixPreProcessor =
+                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+
+
+        final Optional<String> enumKeyRepr = fixPreProcessor.getEnumKeyRepr(28, "N");
+        assertThat(enumKeyRepr.isPresent(), is(true));
+        assertThat(enumKeyRepr.get(), is("NEW"));
     }
 }
