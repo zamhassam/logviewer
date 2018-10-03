@@ -58,8 +58,6 @@ public class BottomPaneSelected<UnderlyingData> implements State
                 case Tab:
                     nextState.init();
                     return nextState;
-                default:
-                    return this;
             }
         }
         bottomPane.onKeyStroke(keyStroke);

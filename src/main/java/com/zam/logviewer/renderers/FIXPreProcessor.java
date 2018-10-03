@@ -48,9 +48,9 @@ class FIXPreProcessor
         preProcessFields(documents);
     }
 
-    FixFieldNode getFixTreeRoot(final String messageTypeKey)
+    Optional<FixFieldNode> getFixTreeRoot(final String messageTypeKey)
     {
-        return messageToFixTree.get(messageTypeKey);
+        return Optional.ofNullable(messageToFixTree.get(messageTypeKey));
     }
 
     Optional<String> getEnumKeyRepr(final int fieldKey, final String enumValue)

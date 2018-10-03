@@ -70,8 +70,6 @@ public class ResizePaneSelected<UnderlyingData> implements State
                 case Tab:
                     nextState.init();
                     return nextState;
-                default:
-                    return this;
             }
         }
 

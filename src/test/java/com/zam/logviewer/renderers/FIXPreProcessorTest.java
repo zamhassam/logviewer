@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+import junit.framework.AssertionFailedError;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -43,7 +45,7 @@ public class FIXPreProcessorTest
         final FIXPreProcessor
                 fixPreProcessor =
                 new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
-        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6");
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren(), is(true));
         assertThat(fixTreeRoot.getFieldName(), is("IOI"));
@@ -99,7 +101,7 @@ public class FIXPreProcessorTest
         final FIXPreProcessor
                 fixPreProcessor =
                 new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
-        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6");
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren(), is(true));
         assertThat(fixTreeRoot.getFieldName(), is("IOI"));
@@ -159,7 +161,7 @@ public class FIXPreProcessorTest
         final FIXPreProcessor
                 fixPreProcessor =
                 new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
-        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6");
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren(), is(true));
         assertThat(fixTreeRoot.getFieldName(), is("IOI"));
@@ -226,7 +228,7 @@ public class FIXPreProcessorTest
         final FIXPreProcessor
                 fixPreProcessor =
                 new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
-        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6");
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren(), is(true));
         assertThat(fixTreeRoot.getFieldName(), is("IOI"));
