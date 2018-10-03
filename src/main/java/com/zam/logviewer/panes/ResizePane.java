@@ -1,14 +1,11 @@
 package com.zam.logviewer.panes;
 
-import com.googlecode.lanterna.TerminalSize;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.terminal.Terminal;
-import com.zam.logviewer.LogViewerScreen;
-
 import java.io.IOException;
 import java.util.Optional;
-import java.util.regex.Pattern;
+
+import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
+import com.zam.logviewer.LogViewerScreen;
 
 public class ResizePane implements Pane
 {
@@ -36,6 +33,7 @@ public class ResizePane implements Pane
         redrawScreen();
     }
 
+    @Override
     public void onKeyStroke(final KeyStroke keyStroke) throws IOException
     {
         if (keyStroke.getKeyType() == KeyType.Enter && keyStroke.isShiftDown())
