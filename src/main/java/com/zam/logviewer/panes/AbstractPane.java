@@ -104,6 +104,7 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
 
     void setCursorPosition(final int row)
     {
+        onSelected();
         lastKnownRow = row;
     }
 

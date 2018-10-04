@@ -68,6 +68,7 @@ public class ResizePaneSelected<UnderlyingData> implements State
                 case Escape:
                     return terminatedState;
                 case Tab:
+                    resizePane.clearSearch();
                     nextState.init();
                     return nextState;
             }

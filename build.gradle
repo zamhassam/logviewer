@@ -8,6 +8,7 @@ group 'com.zam'
 version '1.0-SNAPSHOT'
 mainClassName = "com.zam.logviewer.Main"
 sourceCompatibility = 1.8
+applicationDefaultJvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=10101"]
 
 repositories {
     mavenCentral()

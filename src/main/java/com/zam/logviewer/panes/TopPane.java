@@ -41,14 +41,14 @@ public final class TopPane<UnderlyingData> extends AbstractPane<UnderlyingData> 
 
     private Optional<Integer> findOccurrenceOffset(final Function<Node<UnderlyingData>, Optional<Node<UnderlyingData>>> iter, final Pattern pattern)
     {
-        final Node<UnderlyingData> cur = terminalLines.getCurrentLineNode();
-        Optional<Node<UnderlyingData>> next;
-        for (int i = 1; (next = iter.apply(cur)).isPresent(); i++)
+        Optional<Node<UnderlyingData>> cur = Optional.ofNullable(terminalLines.getCurrentLineNode());
+        for (int i = 1; cur.isPresent(); i++)
         {
-            if (pattern.matcher(next.get().getRenderedData()).find())
+            if (pattern.matcher(cur.get().getRenderedData()).find())
             {
                 return Optional.of(i);
             }
+            cur = iter.apply(cur.get());
         }
         return Optional.empty();
     }

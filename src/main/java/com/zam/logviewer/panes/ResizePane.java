@@ -88,7 +88,12 @@ public class ResizePane implements Pane
     @Override
     public void redrawScreen()
     {
-        screen.putString(screen.getRowOfMiddlePane(), "");
+        screen.putString(screen.getRowOfMiddlePane(), regexEntry.toString());
     }
 
+    public void clearSearch()
+    {
+        regexEntry.setLength(0);
+        redrawScreen();
+    }
 }
