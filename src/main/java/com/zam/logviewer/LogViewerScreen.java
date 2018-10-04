@@ -40,6 +40,11 @@ public class LogViewerScreen
         screen.setCursorPosition(new TerminalPosition(0, row));
     }
 
+    public void setCursorPosition(final int row, final int col)
+    {
+        screen.setCursorPosition(new TerminalPosition(col, row));
+    }
+
     public int getFirstRowOfTopPane()
     {
         return 0;

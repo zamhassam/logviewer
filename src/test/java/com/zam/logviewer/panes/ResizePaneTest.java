@@ -42,6 +42,7 @@ public class ResizePaneTest
         // Then
         final InOrder inOrder = inOrder(logViewerScreen);
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verifyNoMoreInteractions();
     }
 
@@ -72,7 +73,9 @@ public class ResizePaneTest
 
         // Then
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq(""));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(0));
         inOrder.verifyNoMoreInteractions();
     }
 
@@ -90,6 +93,7 @@ public class ResizePaneTest
         // Then
         final InOrder inOrder = inOrder(logViewerScreen, textSearchPane);
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
         inOrder.verify(logViewerScreen).bell();
         inOrder.verifyNoMoreInteractions();
@@ -110,6 +114,7 @@ public class ResizePaneTest
         // Then
         final InOrder inOrder = inOrder(logViewerScreen, textSearchPane);
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
         inOrder.verify(textSearchPane).advanceByLines(eq(5), eq(false));
         inOrder.verifyNoMoreInteractions();
@@ -132,6 +137,7 @@ public class ResizePaneTest
         // Then
         final InOrder inOrder = inOrder(logViewerScreen, textSearchPane);
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
         inOrder.verify(textSearchPane).advanceByLines(eq(5), eq(false));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
@@ -159,6 +165,7 @@ public class ResizePaneTest
         // Then
         final InOrder inOrder = inOrder(logViewerScreen, textSearchPane);
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
         inOrder.verify(textSearchPane).advanceByLines(eq(5), eq(false));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
@@ -191,12 +198,17 @@ public class ResizePaneTest
         // Then
         final InOrder inOrder = inOrder(logViewerScreen, textSearchPane);
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("a"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("a"));
         inOrder.verify(textSearchPane).advanceByLines(eq(5), eq(false));
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq(""));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(0));
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("b"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(1));
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("ba"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(2));
         inOrder.verify(logViewerScreen).putString(eq(ROW), eq("bac"));
+        inOrder.verify(logViewerScreen).setCursorPosition(eq(ROW), eq(3));
         inOrder.verify(textSearchPane).findNextOccurrenceOffset(eq("bac"));
         inOrder.verify(textSearchPane).advanceByLines(eq(10), eq(false));
         inOrder.verifyNoMoreInteractions();

@@ -60,6 +60,7 @@ public class ResizePane implements Pane
         {
             regexEntry.append(keyStroke.getCharacter());
             screen.putString(screen.getRowOfMiddlePane(), regexEntry.toString());
+            screen.setCursorPosition(screen.getRowOfMiddlePane(), regexEntry.length());
         }
         else if (keyStroke.getKeyType() == KeyType.Backspace)
         {
@@ -70,6 +71,7 @@ public class ResizePane implements Pane
             }
             regexEntry.setLength(regexEntry.length() - 1);
             screen.putString(screen.getRowOfMiddlePane(), regexEntry.toString());
+            screen.setCursorPosition(screen.getRowOfMiddlePane(), regexEntry.length());
         }
     }
 

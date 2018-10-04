@@ -78,7 +78,7 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
             return true;
         }
         terminalLines.setCurrentLineNode(node.get());
-        setCursorPosition(screen.getCursorRow() + step);
+        setCursorPosition(lastKnownRow + step);
         return false;
     }
 
@@ -104,7 +104,6 @@ public abstract class AbstractPane<UnderlyingData> implements Pane
 
     void setCursorPosition(final int row)
     {
-        onSelected();
         lastKnownRow = row;
     }
 
