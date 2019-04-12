@@ -14,6 +14,8 @@ import javax.xml.xpath.XPathExpressionException;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -21,6 +23,7 @@ import org.xml.sax.SAXException;
 
 class FIXPreProcessor
 {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final String FIELDS_XPATH = "/fix/fields/field";
     private static final String COMPONENTS_XPATH = "/fix/components/component";
     private static final String MESSAGES_XPATH = "/fix/messages/message";
@@ -233,8 +236,8 @@ class FIXPreProcessor
         {
             XmlFunctions.forEach(node.getChildNodes(), childNode ->
             {
-                final String enumName = getField(childNode, "description");
                 final String enumValue = getField(childNode, "enum");
+                final String enumName = getField(childNode, "description", enumValue);
                 fieldNode.addEnumValue(enumValue, enumName);
             });
 
@@ -243,7 +246,21 @@ class FIXPreProcessor
 
     private static String getField(final Node node, final String field)
     {
-        return node.getAttributes().getNamedItem(field).getNodeValue();
+        return getField(node, field, null);
+    }
+
+    private static String getField(final Node node, final String field, final String defaultValue)
+    {
+        final Node namedItem = node.getAttributes().getNamedItem(field);
+        if (namedItem == null && defaultValue != null)
+        {
+            return defaultValue;
+        }
+        if (namedItem == null)
+        {
+            throw new NullPointerException("Failed to get " + field + "from " + node);
+        }
+        return namedItem.getNodeValue();
     }
 
     public static class FixFieldNode
@@ -300,7 +317,7 @@ class FIXPreProcessor
                    '}';
         }
 
-        public String getDataType()
+        String getDataType()
         {
             return dataType;
         }
