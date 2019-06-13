@@ -33,9 +33,67 @@ public class Main
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void main(final String[] args) throws IOException
+    public static void main(final String[] args) throws
+                                                 IOException
     {
         final CmdOptions cmdOptions = parseCommandLineArgs(args);
+        if (cmdOptions.isNonInteractive())
+        {
+            runNonInteractive(cmdOptions);
+        }
+        else
+        {
+            runInteractive(cmdOptions);
+        }
+    }
+
+    private static void runNonInteractive(final CmdOptions cmdOptions) throws
+                                                                       IOException
+    {
+        final FIXRenderer fixRenderer;
+        if (cmdOptions.getFixXmls() != null)
+        {
+            fixRenderer = new FIXRenderer(cmdOptions.getFixXmls());
+        }
+        else
+        {
+            fixRenderer = new FIXRenderer();
+        }
+
+        BufferedReader reader = null;
+        try
+        {
+            if (cmdOptions.getLogFile() == null)
+            {
+                reader = new BufferedReader(new InputStreamReader(System.in));
+            }
+            else
+            {
+                reader = new BufferedReader(new FileReader(cmdOptions.getLogFile()));
+            }
+
+            String line;
+            while ((line = reader.readLine()) != null)
+            {
+                for (final String output : fixRenderer.renderBottomPaneContents(line))
+                {
+                    System.out.println(output);
+                }
+                System.out.println();
+            }
+        }
+        finally
+        {
+            if (reader != null)
+            {
+                reader.close();
+            }
+        }
+    }
+
+    private static void runInteractive(final CmdOptions cmdOptions) throws
+                                                                    IOException
+    {
         final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
         final Terminal terminal = defaultTerminalFactory.createTerminal();
         BufferedReader reader = null;
@@ -88,24 +146,27 @@ public class Main
 
             final ExecutorService eventPoller = Executors.newSingleThreadExecutor(r ->
                                                                                   {
-                                                                                      final Thread t = Executors.defaultThreadFactory().newThread(r);
+                                                                                      final Thread
+                                                                                              t =
+                                                                                              Executors.defaultThreadFactory()
+                                                                                                       .newThread(r);
                                                                                       t.setDaemon(true);
                                                                                       return t;
                                                                                   });
             eventPoller.execute(() ->
-                               {
-                                   while (true)
-                                   {
-                                       try
-                                       {
-                                           events.add(new EventLoop.Event(screen.readInput(), false));
-                                       }
-                                       catch (final IOException e)
-                                       {
-                                           LOGGER.error("Could not read input", e);
-                                       }
-                                   }
-                               });
+                                {
+                                    while (true)
+                                    {
+                                        try
+                                        {
+                                            events.add(new EventLoop.Event(screen.readInput(), false));
+                                        }
+                                        catch (final IOException e)
+                                        {
+                                            LOGGER.error("Could not read input", e);
+                                        }
+                                    }
+                                });
             topPaneSelected.setNextState(resizePaneSelected);
             resizePaneSelected.setNextState(bottomPaneSelected);
             bottomPaneSelected.setNextState(topPaneSelected);

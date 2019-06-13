@@ -9,11 +9,13 @@ final class CmdOptions
 {
     private final String[] fixXmls;
     private final String logFile;
+    private final boolean nonInteractive;
 
     static CmdOptions parseCommandLineArgs(final String[] args)
     {
         final String fixXmlOptStr = "fix-xml";
         final String logFileOptStr = "log-file";
+        final String nonInteractiveOptStr = "no-interactive";
 
         final Options options = new Options();
         final Option fixXmlsOpt = Option
@@ -34,8 +36,11 @@ final class CmdOptions
                 .required(false)
                 .build();
 
+        final Option interactiveOpt = new Option("n", nonInteractiveOptStr, false, "Read from the stdin and print to the terminal.");
+
         options.addOption(fixXmlsOpt);
         options.addOption(logFileOpt);
+        options.addOption(interactiveOpt);
 
         final DefaultParser parser = new DefaultParser();
         final CommandLine parsed;
@@ -46,7 +51,7 @@ final class CmdOptions
         catch (final Exception e)
         {
             final HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "logviewer", options );
+            formatter.printHelp("logviewer", options);
             throw new IllegalArgumentException(e);
         }
 
@@ -57,7 +62,7 @@ final class CmdOptions
             fixXmls = parsed.getOptionValues(fixXmlOptStr);
             for (final String fixXml : fixXmls)
             {
-                if (! Files.exists(Paths.get(fixXml)))
+                if (!Files.exists(Paths.get(fixXml)))
                 {
                     throw new IllegalArgumentException("FIX XML does not exist: " + fixXml);
                 }
@@ -68,10 +73,12 @@ final class CmdOptions
             fixXmls = null;
         }
 
+        final boolean nonInteractive = parsed.hasOption(nonInteractiveOptStr);
+
         if (parsed.hasOption(logFileOptStr))
         {
             logFile = parsed.getOptionValue(logFileOptStr);
-            if (! Files.exists(Paths.get(logFile)))
+            if (!Files.exists(Paths.get(logFile)))
             {
                 throw new IllegalArgumentException("FIX XML does not exist: " + logFile);
             }
@@ -81,7 +88,7 @@ final class CmdOptions
             logFile = null;
         }
 
-        return new CmdOptions(fixXmls, logFile);
+        return new CmdOptions(fixXmls, logFile, nonInteractive);
     }
 
     String[] getFixXmls()
@@ -94,9 +101,15 @@ final class CmdOptions
         return logFile;
     }
 
-    private CmdOptions(final String[] fixXmls, final String logFile)
+    public boolean isNonInteractive()
+    {
+        return nonInteractive;
+    }
+
+    private CmdOptions(final String[] fixXmls, final String logFile, final boolean nonInteractive)
     {
         this.fixXmls = fixXmls;
         this.logFile = logFile;
+        this.nonInteractive = nonInteractive;
     }
 }
