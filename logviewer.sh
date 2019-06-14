@@ -4,14 +4,18 @@ INPUT_DATA=""
 
 if [[ ! -t 0 ]]
 then
-    read INPUT_DATA
+    while read input
+    do
+        INPUT_DATA="${INPUT_DATA}\n${input}"
+    done
 fi
-
-./gradlew  installDist
-
 SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 ARGS="${@}"
 EXECUTABLE="${SCRIPT_DIR}/build/install/logviewer/bin/logviewer"
+
+pushd ${SCRIPT_DIR}
+./gradlew installDist
+popd
 
 if [[ -z ${ARGS} ]]
 then
@@ -26,5 +30,5 @@ if [ -z "${INPUT_DATA}" ]
 then
     bash ${EXECUTABLE} ${ARGS}
 else
-    echo ${INPUT_DATA} | bash ${EXECUTABLE} ${ARGS} -n
+    echo -e ${INPUT_DATA} | bash ${EXECUTABLE} ${ARGS} -n
 fi
