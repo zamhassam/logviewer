@@ -2,7 +2,7 @@
 set -euo pipefail
 INPUT_DATA=""
 
-if [ ! -t 0 ]
+if [[ ! -t 0 ]]
 then
     read INPUT_DATA
 fi
@@ -13,7 +13,7 @@ SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 ARGS="${@}"
 EXECUTABLE="${SCRIPT_DIR}/build/install/logviewer/bin/logviewer"
 
-if [ -z ${ARGS} ]
+if [[ -z ${ARGS} ]]
 then
     echo "---------------------------------------------------"
     echo "Optional Arguments:"
