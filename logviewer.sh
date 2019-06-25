@@ -21,7 +21,7 @@ if [[ -z ${ARGS} ]]
 then
     echo "---------------------------------------------------"
     echo "Optional Arguments:"
-    echo "  --fix-xml space separated list of FIX specs"
+    echo "  --fix-xml comma separated list of FIX specs"
     echo "  --log-file file to read (only use when not piping)"
     echo "---------------------------------------------------"
 fi
