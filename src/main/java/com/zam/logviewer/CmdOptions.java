@@ -1,5 +1,8 @@
 package com.zam.logviewer;
 
+import java.util.List;
+
+
 import picocli.CommandLine;
 
 final class CmdOptions
@@ -10,6 +13,7 @@ final class CmdOptions
     private String logFile;
     @CommandLine.Option(names = "-n", description = "Read from the stdin and print to the terminal.")
     private boolean nonInteractive;
+    private String fixLines;
 
     private CmdOptions()
     {
@@ -25,6 +29,11 @@ final class CmdOptions
         return logFile;
     }
 
+    public String getFixLines()
+    {
+        return fixLines;
+    }
+
     public boolean isNonInteractive()
     {
         return nonInteractive;
@@ -33,8 +42,10 @@ final class CmdOptions
     static CmdOptions parseCommandLineArgs(final String[] args)
     {
         final CmdOptions cmdOptions = new CmdOptions();
-        new CommandLine(cmdOptions).parse(args);
-
+        final CommandLine commandLine = new CommandLine(cmdOptions).setUnmatchedArgumentsAllowed(true);
+        commandLine.parse(args);
+        final List<String> fixStrings = commandLine.getParseResult().unmatched();
+        cmdOptions.fixLines = String.join("\n", fixStrings);
         return cmdOptions;
     }
 

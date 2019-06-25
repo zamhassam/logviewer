@@ -28,7 +28,7 @@ fi
 
 if [ -z "${INPUT_DATA}" ]
 then
-    bash ${EXECUTABLE} ${ARGS}
+    bash ${EXECUTABLE} -n ${ARGS}
 else
     echo -e ${INPUT_DATA} | bash ${EXECUTABLE} ${ARGS} -n
 fi
