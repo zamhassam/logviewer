@@ -24,8 +24,8 @@ shadowJar {
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/commons-cli/commons-cli
-    compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
+    // https://mvnrepository.com/artifact/info.picocli/picocli
+    compile group: 'info.picocli', name: 'picocli', version: '4.0.0-beta-1b'
 
     // https://mvnrepository.com/artifact/org.quickfixj/quickfixj-messages-all
     compile group: 'org.quickfixj', name: 'quickfixj-messages-all', version: '2.1.0'

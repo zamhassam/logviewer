@@ -1,5 +1,16 @@
 package com.zam.logviewer;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
@@ -14,18 +25,10 @@ import com.zam.logviewer.states.TerminatedState;
 import com.zam.logviewer.states.TopPaneSelected;
 import com.zam.logviewer.terminallines.BufferedReaderTerminalLines;
 import com.zam.logviewer.terminallines.ListTerminalLines;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.zam.logviewer.CmdOptions.parseCommandLineArgs;
 
@@ -34,7 +37,7 @@ public class Main
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static void main(final String[] args) throws
-                                                 IOException
+            IOException
     {
         final CmdOptions cmdOptions = parseCommandLineArgs(args);
         if (cmdOptions.isNonInteractive())
@@ -48,7 +51,7 @@ public class Main
     }
 
     private static void runNonInteractive(final CmdOptions cmdOptions) throws
-                                                                       IOException
+            IOException
     {
         final FIXRenderer fixRenderer;
         if (cmdOptions.getFixXmls() != null)
@@ -65,7 +68,14 @@ public class Main
         {
             if (cmdOptions.getLogFile() == null)
             {
-                reader = new BufferedReader(new InputStreamReader(System.in));
+                if (cmdOptions.getFixLines().isEmpty())
+                {
+                    reader = new BufferedReader(new InputStreamReader(System.in));
+                }
+                else
+                {
+                    reader = new BufferedReader(new StringReader(cmdOptions.getFixLines()));
+                }
             }
             else
             {
@@ -92,7 +102,7 @@ public class Main
     }
 
     private static void runInteractive(final CmdOptions cmdOptions) throws
-                                                                    IOException
+            IOException
     {
         final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
         final Terminal terminal = defaultTerminalFactory.createTerminal();
@@ -128,28 +138,32 @@ public class Main
             bottomPane.setCurrentLine(terminalLines.getCurrentLineNode());
 
             final BlockingQueue<EventLoop.Event> events = new LinkedBlockingQueue<>();
-            terminal.addResizeListener(((terminal1, newSize) ->
-                    events.add(new EventLoop.Event(null, true))));
+            terminal.addResizeListener((
+                                               (terminal1, newSize) ->
+                                                       events.add(new EventLoop.Event(null, true))));
             final TerminatedState terminatedState = new TerminatedState();
 
-            final TopPaneSelected<String> topPaneSelected = new TopPaneSelected<>(topPane,
-                                                                                  terminatedState,
-                                                                                  logViewerScreen);
-            final ResizePaneSelected<String> resizePaneSelected = new ResizePaneSelected<>(topPane,
-                                                                                           bottomPane,
-                                                                                           resizePane,
-                                                                                           terminatedState,
-                                                                                           logViewerScreen);
-            final BottomPaneSelected<String> bottomPaneSelected = new BottomPaneSelected<>(bottomPane,
-                                                                                           terminatedState,
-                                                                                           logViewerScreen);
+            final TopPaneSelected<String> topPaneSelected = new TopPaneSelected<>(
+                    topPane,
+                    terminatedState,
+                    logViewerScreen);
+            final ResizePaneSelected<String> resizePaneSelected = new ResizePaneSelected<>(
+                    topPane,
+                    bottomPane,
+                    resizePane,
+                    terminatedState,
+                    logViewerScreen);
+            final BottomPaneSelected<String> bottomPaneSelected = new BottomPaneSelected<>(
+                    bottomPane,
+                    terminatedState,
+                    logViewerScreen);
 
             final ExecutorService eventPoller = Executors.newSingleThreadExecutor(r ->
                                                                                   {
                                                                                       final Thread
                                                                                               t =
                                                                                               Executors.defaultThreadFactory()
-                                                                                                       .newThread(r);
+                                                                                                      .newThread(r);
                                                                                       t.setDaemon(true);
                                                                                       return t;
                                                                                   });
@@ -170,10 +184,11 @@ public class Main
             topPaneSelected.setNextState(resizePaneSelected);
             resizePaneSelected.setNextState(bottomPaneSelected);
             bottomPaneSelected.setNextState(topPaneSelected);
-            EventLoop.eventLoop(topPaneSelected,
-                                logViewerScreen,
-                                events,
-                                Arrays.asList(topPane, resizePane, bottomPane));
+            EventLoop.eventLoop(
+                    topPaneSelected,
+                    logViewerScreen,
+                    events,
+                    Arrays.asList(topPane, resizePane, bottomPane));
 
         }
         catch (final Exception e)
