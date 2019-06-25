@@ -11,10 +11,10 @@ then
 fi
 SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 ARGS="${@}"
-EXECUTABLE="${SCRIPT_DIR}/build/install/logviewer/bin/logviewer"
+EXECUTABLE="${SCRIPT_DIR}/build/libs/logviewer-1.0-SNAPSHOT-all.jar"
 
 pushd ${SCRIPT_DIR}
-./gradlew installDist
+./gradlew shadowJar
 popd
 
 if [[ -z ${ARGS} ]]
@@ -28,7 +28,7 @@ fi
 
 if [ -z "${INPUT_DATA}" ]
 then
-    bash ${EXECUTABLE} -n ${ARGS}
+    java -jar ${EXECUTABLE} -n ${ARGS}
 else
-    echo -e ${INPUT_DATA} | bash ${EXECUTABLE} ${ARGS} -n
+    echo -e ${INPUT_DATA} | java -jar ${EXECUTABLE} ${ARGS} -n
 fi
