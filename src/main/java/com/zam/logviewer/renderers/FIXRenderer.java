@@ -68,6 +68,18 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
+    public FIXRenderer(final InputStream... inputStreams)
+    {
+        try
+        {
+            fixPreProcessor = new FIXPreProcessor(inputStreams);
+        }
+        catch (final IOException | SAXException | ParserConfigurationException | XPathExpressionException e)
+        {
+            throw new IllegalArgumentException("Could not process FIX XMLs:" + Arrays.toString(inputStreams), e);
+        }
+    }
+
     private Optional<String> findFixMsg(final String line)
     {
         final Matcher fixMsgMatcher = FIX_MSG.matcher(line);

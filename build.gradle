@@ -29,7 +29,7 @@ dependencies {
     compile group: 'info.picocli', name: 'picocli', version: '4.0.0-beta-1b'
 
     // https://mvnrepository.com/artifact/org.quickfixj/quickfixj-messages-all
-    compile group: 'org.quickfixj', name: 'quickfixj-messages-all', version: '2.1.0'
+    compile group: 'org.quickfixj', name: 'quickfixj-core', version: '2.1.0'
 
     // https://mvnrepository.com/artifact/com.googlecode.lanterna/lanterna
     compile group: 'com.googlecode.lanterna', name: 'lanterna', version: '3.0.1'
