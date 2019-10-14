@@ -1,20 +1,25 @@
 package com.zam.logviewer.panes;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.zam.logviewer.LogViewerScreen;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.regex.Pattern;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
-import static org.mockito.Mockito.*;
-
-public class ResizePaneTest
+class ResizePaneTest
 {
 
 
@@ -23,15 +28,15 @@ public class ResizePaneTest
     private final ResizePane resizePane = new ResizePane(logViewerScreen, textSearchPane);
     private static final int ROW = 10;
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    void setUp()
     {
         when(textSearchPane.findPrevOccurrenceOffset(any(String.class))).thenReturn(Optional.empty());
         when(textSearchPane.findNextOccurrenceOffset(any(String.class))).thenReturn(Optional.empty());
     }
 
     @Test
-    public void shouldShowEntryTextWhenCharactersEntered() throws IOException
+    void shouldShowEntryTextWhenCharactersEntered() throws IOException
     {
         // Given
 
@@ -47,7 +52,7 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldSupportBackSpaceWhenNoCharactersEntered() throws IOException
+    void shouldSupportBackSpaceWhenNoCharactersEntered() throws IOException
     {
         // Given
 
@@ -61,7 +66,7 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldSupportBackSpaceOFEnteredCharacters() throws IOException
+    void shouldSupportBackSpaceOFEnteredCharacters() throws IOException
     {
         // Given
         final InOrder inOrder = inOrder(logViewerScreen);
@@ -80,7 +85,7 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldDoNothingIfSearchIsntFound() throws IOException
+    void shouldDoNothingIfSearchIsntFound() throws IOException
     {
         // Given
 
@@ -100,8 +105,8 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldStartSearchOnReturnKey() throws
-                                               IOException
+    void shouldStartSearchOnReturnKey() throws
+            IOException
     {
         // Given
 
@@ -121,8 +126,8 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldAdvanceSearchOnNKey() throws
-                                            IOException
+    void shouldAdvanceSearchOnNKey() throws
+            IOException
     {
         // Given
 
@@ -146,7 +151,7 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldReverseSearchOnShiftNKey() throws IOException
+    void shouldReverseSearchOnShiftNKey() throws IOException
     {
         // Given
 
@@ -178,7 +183,7 @@ public class ResizePaneTest
     }
 
     @Test
-    public void shouldSupportMultipleSearches() throws
+    void shouldSupportMultipleSearches() throws
             IOException
     {
         // Given

@@ -1,24 +1,23 @@
 package com.zam.logviewer.renderers;
 
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-public class FIXRendererTest
+import static org.assertj.core.api.Assertions.assertThat;
+
+class FIXRendererTest
 {
     private final FIXRenderer fixRenderer = new FIXRenderer();
 
     @Test
-    public void shouldntRenderInvalidFix()
+    void shouldntRenderInvalidFix()
     {
         final List<String>
                 actual =
@@ -30,11 +29,11 @@ public class FIXRendererTest
         expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
         expected.add("|--SenderCompID[49] = A");
         expected.add("|--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldntRenderInvalidFixKey()
+    void shouldntRenderInvalidFixKey()
     {
         final List<String>
                 actual =
@@ -47,11 +46,11 @@ public class FIXRendererTest
         expected.add("*--200023[200023] = A");
         expected.add("*--SenderCompID[49] = A");
         expected.add("*--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldRenderFixMsgWithPipeDelimiter()
+    void shouldRenderFixMsgWithPipeDelimiter()
     {
         final List<String>
                 actual =
@@ -86,11 +85,53 @@ public class FIXRendererTest
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
         expected.add("|--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Disabled("Not yet implemented")
+    @Test
+    void shouldRenderUnknownFieldsWithoutBreakingStructure()
+    {
+        final List<String>
+                actual =
+                fixRenderer.renderBottomPaneContents(
+                        "8=FIX.4.4|9=196|35=X|49=A|56=B|34=12|52=20100318-03:21:11.364|262=A|268=2|279=0|269=0|" +
+                        "278=BID|55=EUR/USD|270=1.37215|15=EUR|271=2500000|346=1|279=0|269=1|278=OFFER|55=EUR/USD|" +
+                        "270=1.37224|15=EUR|201120=UNKNOWN_FIELD_1|201121=UNKNOWN_FIELD_2|271=2503200|346=1|10=171|");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--TargetCompID[56] = B");
+        expected.add("|--MsgSeqNum[34] = 12");
+        expected.add("|--SendingTime[52] = 20100318-03:21:11.364");
+        expected.add("|--MDReqID[262] = A");
+        expected.add("|--NoMDEntries[268] = 2");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = BID[0]");
+        expected.add("  |--MDEntryID[278] = BID");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37215");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  |--MDEntrySize[271] = 2500000");
+        expected.add("  |--NumberOfOrders[346] = 1");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = OFFER[1]");
+        expected.add("  |--MDEntryID[278] = OFFER");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37224");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  *--201120[201120] = UNKNOWN_FIELD_1");
+        expected.add("  *--201121[201121] = UNKNOWN_FIELD_2");
+        expected.add("  |--MDEntrySize[271] = 2503200");
+        expected.add("  |--NumberOfOrders[346] = 1");
+        expected.add("|--CheckSum[10] = 171");
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldRenderBadGroups()
+    void shouldRenderBadGroups()
     {
         final List<String>
                 actual =
@@ -122,11 +163,11 @@ public class FIXRendererTest
         expected.add("*--Commission[12] = FakeNumber");
         expected.add("*--NumberOfOrders[346] = 1");
         expected.add("*--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldRenderFixMsgWithNestedGroups()
+    void shouldRenderFixMsgWithNestedGroups()
     {
         final List<String>
                 actual =
@@ -166,11 +207,11 @@ public class FIXRendererTest
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
         expected.add("|--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldRenderFixMsgWithSOHDelimiter()
+    void shouldRenderFixMsgWithSOHDelimiter()
     {
         final List<String> actual = fixRenderer.renderBottomPaneContents(
                 "8=FIX.4.4\u00019=196\u000135=X\u000149=A\u000156=B\u000134=12\u000152=20100318-03:21:11.364" +
@@ -204,11 +245,11 @@ public class FIXRendererTest
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
         expected.add("|--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldRenderFixMsgInLogLine()
+    void shouldRenderFixMsgInLogLine()
     {
 
         final List<String> actual = fixRenderer.renderBottomPaneContents(
@@ -244,18 +285,19 @@ public class FIXRendererTest
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
         expected.add("|--CheckSum[10] = 171");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void shouldNotRenderNonFixMessage()
+    void shouldNotRenderNonFixMessage()
     {
         final List<String> strings = fixRenderer.renderBottomPaneContents("This is not a valid log line.");
-        assertThat(strings.isEmpty(), is(true));
+        assertThat(strings).isEmpty();
+
     }
 
     @Test
-    public void shouldRenderFixMsgWithCustomFixXml() throws IOException
+    void shouldRenderFixMsgWithCustomFixXml() throws IOException
     {
 
         final String fixXmlStr = "<fix>\n" +
@@ -306,6 +348,6 @@ public class FIXRendererTest
         expected.add("|--FakeField2[20008] = JUNIOR");
         expected.add("|--FakeField1[20007] = FRIDGE");
         expected.add("|--CheckSum[10] = 50");
-        assertThat(actual, is(expected));
+        assertThat(actual).isEqualTo(expected);
     }
 }

@@ -1,23 +1,23 @@
 package com.zam.logviewer.terminallines;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ListTerminalLinesTest extends TerminalLinesTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class ListTerminalLinesTest extends TerminalLinesTest
+{
 
     private ListTerminalLines terminalLines;
 
-    @Before
-    public void setUp() throws Exception
+    @BeforeEach
+    void setUp() throws Exception
     {
         final ListTerminalLines listTerminalLines = new ListTerminalLines();
         final List<String> strings = Files.readAllLines(Paths.get("src/main/resources/aliceinwonderland.txt"));
@@ -29,12 +29,12 @@ public class ListTerminalLinesTest extends TerminalLinesTest {
     }
 
     @Test
-    public void testNoDataToRender()
+    void testNoDataToRender()
     {
         terminalLines.reset(new ArrayList<>());
         assertNotNull(terminalLines.getCurrentLineNode());
-        assertThat(terminalLines.getCurrentLineNode().getRenderedData(), is(""));
-        assertThat(terminalLines.nextNode(terminalLines.getCurrentLineNode()).isPresent(), is(false));
-        assertThat(terminalLines.prevNode(terminalLines.getCurrentLineNode()).isPresent(), is(false));
+        assertThat(terminalLines.getCurrentLineNode().getRenderedData()).isEqualTo("");
+        assertThat(terminalLines.nextNode(terminalLines.getCurrentLineNode()).isPresent()).isFalse();
+        assertThat(terminalLines.prevNode(terminalLines.getCurrentLineNode()).isPresent()).isFalse();
     }
 }

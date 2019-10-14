@@ -1,11 +1,10 @@
 package com.zam.logviewer.terminallines;
 
-import org.junit.Test;
-
 import java.util.Optional;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class TerminalLinesTest
 {
@@ -22,13 +21,13 @@ abstract class TerminalLinesTest
     }
 
     @Test
-    public void shouldBeAbleToGetTopLine()
+    void shouldBeAbleToGetTopLine()
     {
-        assertThat(terminalLines.getTopLineNode().getRenderedData(), is("ALICE'S ADVENTURES IN WONDERLAND"));
+        assertThat(terminalLines.getTopLineNode().getRenderedData()).isEqualTo("ALICE'S ADVENTURES IN WONDERLAND");
     }
 
     @Test
-    public void shouldBeAbleToGetBottomLine()
+    void shouldBeAbleToGetBottomLine()
     {
         Node<String> cur;
         Optional<Node<String>> next = Optional.ofNullable(terminalLines.getTopLineNode());
@@ -38,11 +37,11 @@ abstract class TerminalLinesTest
             terminalLines.setBottomLineNode(next.get());
             next = terminalLines.nextNode(cur);
         }
-        assertThat(terminalLines.getBottomLineNode().getRenderedData(), is("subscribe to our email newsletter to hear about new eBooks."));
+        assertThat(terminalLines.getBottomLineNode().getRenderedData()).isEqualTo("subscribe to our email newsletter to hear about new eBooks.");
     }
 
     @Test
-    public void shouldBeAbleToGoTopBottomAndThenTop()
+    void shouldBeAbleToGoTopBottomAndThenTop()
     {
         Node<String> cur;
         Optional<Node<String>> next = Optional.ofNullable(terminalLines.getTopLineNode());
@@ -60,6 +59,6 @@ abstract class TerminalLinesTest
             terminalLines.setTopLineNode(prev.get());
             prev = terminalLines.prevNode(cur);
         }
-        assertThat(terminalLines.getTopLineNode().getRenderedData(), is("ALICE'S ADVENTURES IN WONDERLAND"));
+        assertThat(terminalLines.getTopLineNode().getRenderedData()).isEqualTo("ALICE'S ADVENTURES IN WONDERLAND");
     }
 }
