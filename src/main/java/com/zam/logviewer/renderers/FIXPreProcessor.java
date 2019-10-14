@@ -263,6 +263,11 @@ class FIXPreProcessor
         return namedItem.getNodeValue();
     }
 
+    boolean hasField(final int field)
+    {
+        return fieldsIdToName.containsKey(field);
+    }
+
     public static class FixFieldNode
     {
         private final String fieldName;

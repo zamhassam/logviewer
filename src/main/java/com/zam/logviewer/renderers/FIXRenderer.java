@@ -91,7 +91,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         {
             return Collections.emptyList();
         }
-        final Optional<Object> fixPreProcessor = getFixPreProcessor(fixMsg.get());
+        final Optional<FIXPreProcessor> fixPreProcessor = getFixPreProcessor(fixMsg.get());
         if (!fixPreProcessor.isPresent())
         {
             return Collections.emptyList();
@@ -103,7 +103,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
                     .map(s -> s.split("="))
                     .map(keyVal -> new FixPair(keyVal[0], keyVal[1]))
                     .collect(Collectors.toList());
-            return renderFixFields(fixFields);
+            return renderFixFields(fixFields, fixPreProcessor.get());
         }
         catch (Exception e)
         {
@@ -112,7 +112,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
-    private List<String> renderFixFields(final List<FixPair> fixFields)
+    private List<String> renderFixFields(final List<FixPair> fixFields, final FIXPreProcessor fixPreProcessor)
     {
         final Optional<FixPair> msgType = fixFields.stream().filter(fixPair -> fixPair.getKeyInt() == 35).findFirst();
         if (!msgType.isPresent())
@@ -120,7 +120,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             return Collections.emptyList();
         }
         final StringBuilder builder = new StringBuilder();
-        final Optional<FIXPreProcessor.FixFieldNode> fixTreeRoot = fixPreProcessor.getFixTreeRoot(msgType.get().getVal());
+        final Optional<FIXPreProcessor.FixFieldNode> fixTreeRoot = this.fixPreProcessor.getFixTreeRoot(msgType.get().getVal());
         if (! fixTreeRoot.isPresent())
         {
             LOGGER.warn("Could not find FIX message schema for the message type: {}", msgType.get());
@@ -130,7 +130,8 @@ public class FIXRenderer implements BottomPaneRenderer<String>
                                            fixFields,
                                            builder,
                                            0,
-                                           0);
+                                           0,
+                                           fixPreProcessor);
 
         for (; endPos < fixFields.size(); endPos++)
         {
@@ -149,11 +150,14 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
-    private int renderFixFieldInLevel(final FIXPreProcessor.FixFieldNode level,
-                                      final List<FixPair> fixFields,
-                                      final StringBuilder builder,
-                                      final int indentation,
-                                      int pos)
+    private int renderFixFieldInLevel(
+            final FIXPreProcessor.FixFieldNode level,
+            final List<FixPair> fixFields,
+            final StringBuilder builder,
+            final int indentation,
+            int pos,
+            final FIXPreProcessor fixPreProcessor
+    )
     {
         if (pos == fixFields.size() - 1)
         {
@@ -165,9 +169,10 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         while (pos < fixFields.size())
         {
             final FixPair fixPair = fixFields.get(pos);
-            final FIXPreProcessor.FixFieldNode parentNode = level.getChildren().get(fixPair.getKeyInt());
-            if (parentNode == null)
+            final FIXPreProcessor.FixFieldNode fieldDef = level.getChildren().get(fixPair.getKeyInt());
+            if (fieldDef == null && fixPreProcessor.hasField(fixPair.getKeyInt()))
             {
+                // If we can't find the field definition at the level we're at, it must belong to the level above and we've left the repeating group
                 return pos;
             }
             repeatChar(builder, ' ', indentation);
@@ -178,15 +183,15 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             builder.append(renderKeyValue(fixPair));
             builder.append('\n');
             ++pos;
-            if (parentNode.hasChildren())
+            if (fieldDef != null && fieldDef.hasChildren())
             {
-                pos = renderFixFieldInLevel(parentNode, fixFields, builder, indentation + INDENT, pos);
+                pos = renderFixFieldInLevel(fieldDef, fixFields, builder, indentation + INDENT, pos, fixPreProcessor);
             }
         }
         return pos;
     }
 
-    private Optional<Object> getFixPreProcessor(final String fixMsg)
+    private Optional<FIXPreProcessor> getFixPreProcessor(final String fixMsg)
     {
         if (fixPreProcessor == null)
         {

@@ -43,9 +43,9 @@ class FIXRendererTest
         expected.add("+--BeginString[8] = FIX.4.4");
         expected.add("|--BodyLength[9] = 196");
         expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
-        expected.add("*--200023[200023] = A");
-        expected.add("*--SenderCompID[49] = A");
-        expected.add("*--CheckSum[10] = 171");
+        expected.add("|--200023[200023] = A");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--CheckSum[10] = 171");
         assertThat(actual).isEqualTo(expected);
     }
 
@@ -122,8 +122,8 @@ class FIXRendererTest
         expected.add("  |--Symbol[55] = EUR/USD");
         expected.add("  |--MDEntryPx[270] = 1.37224");
         expected.add("  |--Currency[15] = EUR");
-        expected.add("  *--201120[201120] = UNKNOWN_FIELD_1");
-        expected.add("  *--201121[201121] = UNKNOWN_FIELD_2");
+        expected.add("  |--201120[201120] = UNKNOWN_FIELD_1");
+        expected.add("  |--201121[201121] = UNKNOWN_FIELD_2");
         expected.add("  |--MDEntrySize[271] = 2503200");
         expected.add("  |--NumberOfOrders[346] = 1");
         expected.add("|--CheckSum[10] = 171");
