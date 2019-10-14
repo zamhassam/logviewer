@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,7 +87,6 @@ class FIXRendererTest
         assertThat(actual).isEqualTo(expected);
     }
 
-    @Disabled("Not yet implemented")
     @Test
     void shouldRenderUnknownFieldsWithoutBreakingStructure()
     {
@@ -335,7 +333,75 @@ class FIXRendererTest
 
         final File fixXml = File.createTempFile("FixRendererTest", "" + System.currentTimeMillis());
         Files.write(fixXml.toPath(), Arrays.asList(fixXmlStr.split("\n")));
-        final FIXRenderer fixRenderer = new FIXRenderer(fixXml.toString());
+        final FIXRenderer fixRenderer = FIXRenderer.createFIXRenderer(fixXml.toString());
+        final List<String>
+                actual =
+                fixRenderer.renderBottomPaneContents(
+                        "8=FIX.CUSTOM\u000135=0\u000120006=1\u000120008=JUNIOR\u000120007=FRIDGE" +
+                        "\u000110=50\u0001");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.CUSTOM");
+        expected.add("|--MsgType[35] = fakemessagetype1[0]");
+        expected.add("|--FakeEnum[20006] = Fake2[1]");
+        expected.add("|--FakeField2[20008] = JUNIOR");
+        expected.add("|--FakeField1[20007] = FRIDGE");
+        expected.add("|--CheckSum[10] = 50");
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldRenderFixMsgWithExtraFixXml() throws IOException
+    {
+        final String fixXmlStr =
+                "<fix>\n" +
+                "  <messages>\n" +
+                "    <message name=\"fakemessagetype1\" msgtype=\"0\" msgcat=\"app\">\n" +
+                "      <field name=\"MsgType\" required=\"Y\"/>\n" +
+                "      <field name=\"BeginString\" required=\"Y\"/>\n" +
+                "      <field name=\"BodyLength\" required=\"Y\"/>\n" +
+                "      <field name=\"CheckSum\" required=\"Y\"/>\n" +
+                "      <field name=\"FakeEnum\" required=\"Y\"/>\n" +
+                "      <field name=\"FakeField1\" required=\"N\"/>\n" +
+                "      <field name=\"FakeField2\" required=\"N\"/>\n" +
+                "      <field name=\"FakeField3\" required=\"N\"/>\n" +
+                "    </message>\n" +
+                "  </messages>\n" +
+                "  <fields>\n" +
+                "    <field number=\"8\" name=\"BeginString\" type=\"STRING\"/>\n" +
+                "    <field number=\"9\" name=\"BodyLength\" type=\"LENGTH\"/>\n" +
+                "    <field number=\"10\" name=\"CheckSum\" type=\"STRING\"/>\n" +
+                "    <field number=\"20006\" name=\"FakeEnum\" type=\"INT\"/>\n" +
+                "    <field number=\"35\" name=\"MsgType\" type=\"STRING\">\n" +
+                "      <value enum=\"0\" description=\"fakemessagetype1\"/>\n" +
+                "      <value enum=\"1\" description=\"fakemessagetype2\"/>\n" +
+                "      <value enum=\"2\" description=\"fakemessagetype3\"/>\n" +
+                "    </field>\n" +
+                "    <field number=\"20007\" name=\"FakeField1\" type=\"CURRENCY\"/>\n" +
+                "    <field number=\"20008\" name=\"FakeField2\" type=\"NUMINGROUP\"/>\n" +
+                "    <field number=\"20009\" name=\"FakeField3\" type=\"STRING\"/>\n" +
+                "  </fields>\n" +
+                "</fix>";
+        final String fixXmlFieldDefsStr =
+                "<fix>\n" +
+                "  <messages/>\n" +
+                "  <fields>\n" +
+                "    <field number=\"20006\" name=\"FakeEnum\" type=\"INT\">\n" +
+                "      <value enum=\"0\" description=\"Fake1\"/>\n" +
+                "      <value enum=\"1\" description=\"Fake2\"/>\n" +
+                "      <value enum=\"2\" description=\"Fake3\"/>\n" +
+                "    </field>\n" +
+                "  </fields>\n" +
+                "</fix>";
+
+        final File fixXml = File.createTempFile("FixRendererTest", "" + System.currentTimeMillis() + "_1");
+        final File fixXmlFieldDefs = File.createTempFile("FixRendererTest", "" + System.currentTimeMillis() + "_2");
+        Files.write(fixXml.toPath(), Arrays.asList(fixXmlStr.split("\n")));
+        Files.write(fixXmlFieldDefs.toPath(), Arrays.asList(fixXmlFieldDefsStr.split("\n")));
+        final FIXRenderer.FixStreamConfig config = new FIXRenderer.FixStreamConfig();
+        config.addFixFile(fixXml.toString());
+        config.addDefsFixFile(fixXmlFieldDefs.toString());
+
+        final FIXRenderer fixRenderer = new FIXRenderer(config);
         final List<String>
                 actual =
                 fixRenderer.renderBottomPaneContents(

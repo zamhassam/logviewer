@@ -8,8 +8,10 @@ import quickfix.field.ApplVerID;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,27 +51,79 @@ public class FIXRenderer implements BottomPaneRenderer<String>
 
     }
 
-    public FIXRenderer(final String... fixFileLocation)
+    public static final class FixStreamConfig
     {
-        try
+        private final List<InputStream> fixFiles = new ArrayList<>();
+        private final List<InputStream> fixFieldDefsOnly = new ArrayList<>();
+
+        public FixStreamConfig addFixFile(final String fixFile)
         {
-            fixPreProcessor = parseFixXmls(fixFileLocation);
+            try
+            {
+                fixFiles.add(new FileInputStream(fixFile));
+            }
+            catch (FileNotFoundException e)
+            {
+                throw new UncheckedIOException(e);
+            }
+            return this;
         }
-        catch (final IOException | SAXException | ParserConfigurationException | XPathExpressionException e)
+
+        public FixStreamConfig addDefsFixFile(final String fixFile)
         {
-            throw new IllegalArgumentException("Could not process FIX XMLs:" + Arrays.toString(fixFileLocation), e);
+            try
+            {
+                fixFieldDefsOnly.add(new FileInputStream(fixFile));
+            }
+            catch (FileNotFoundException e)
+            {
+                throw new UncheckedIOException(e);
+            }
+            return this;
         }
+
+        public FixStreamConfig addFixFile(final InputStream fixFile)
+        {
+            fixFiles.add(fixFile);
+            return this;
+        }
+
+        public FixStreamConfig addDefsFixFile(final InputStream defsFixFile)
+        {
+            fixFieldDefsOnly.add(defsFixFile);
+            return this;
+        }
+
     }
 
-    public FIXRenderer(final InputStream... inputStreams)
+    public static FIXRenderer createFIXRenderer(final String... fixFileLocation)
+    {
+        final FixStreamConfig config = new FixStreamConfig();
+        for (final String file : fixFileLocation)
+        {
+            config.addFixFile(file);
+        }
+        return new FIXRenderer(config);
+    }
+
+    public FIXRenderer(final FixStreamConfig config)
     {
         try
         {
-            fixPreProcessor = new FIXPreProcessor(inputStreams);
+            final FIXPreProcessor.Config config1 = new FIXPreProcessor.Config();
+            for (final InputStream inputStream : config.fixFiles)
+            {
+                config1.addFixXml(inputStream);
+            }
+            for (final InputStream inputStream : config.fixFieldDefsOnly)
+            {
+                config1.addFieldDefOnlyFixXmls(inputStream);
+            }
+            fixPreProcessor = new FIXPreProcessor(config1);
         }
         catch (final IOException | SAXException | ParserConfigurationException | XPathExpressionException e)
         {
-            throw new IllegalArgumentException("Could not process FIX XMLs:" + Arrays.toString(inputStreams), e);
+            throw new IllegalArgumentException("Could not process FIX XMLs:" + config.fixFiles, e);
         }
     }
 
@@ -269,7 +323,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             {
                 inputStreams.add(this.getClass().getResourceAsStream(fixResourceLocation));
             }
-            return new FIXPreProcessor(inputStreams.toArray(new InputStream[0]));
+            return FIXPreProcessor.createFIXPreProcessor(inputStreams.toArray(new InputStream[0]));
         }
         finally
         {
@@ -290,7 +344,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
             {
                 inputStreams.add(new FileInputStream(fixFileLocation));
             }
-            return new FIXPreProcessor(inputStreams.toArray(new InputStream[0]));
+            return FIXPreProcessor.createFIXPreProcessor(inputStreams.toArray(new InputStream[0]));
         }
         finally
         {

@@ -36,18 +36,55 @@ class FIXPreProcessor
     private final Map<String, Integer> fieldsNameToId = new HashMap<>();
     private Map<Integer, FixFieldNode> allFields = new HashMap<>();
 
-    FIXPreProcessor(final InputStream... inputStreams) throws
+    static FIXPreProcessor createFIXPreProcessor(final InputStream... inputStreams) throws
+            IOException,
+            SAXException,
+            ParserConfigurationException,
+            XPathExpressionException
+    {
+        final Config config = new Config();
+        for (final InputStream inputStream : inputStreams)
+        {
+            config.addFixXml(inputStream);
+        }
+        return new FIXPreProcessor(config);
+    }
+
+    public static final class Config
+    {
+        private final List<InputStream> fixXmls = new ArrayList<>();
+        private final List<InputStream> fieldDefOnlyFixXmls = new ArrayList<>();
+
+        public Config addFixXml(final InputStream inputStream)
+        {
+            fixXmls.add(inputStream);
+            return this;
+        }
+
+        public Config addFieldDefOnlyFixXmls(final InputStream inputStream)
+        {
+            fieldDefOnlyFixXmls.add(inputStream);
+            return this;
+        }
+    }
+
+    public FIXPreProcessor(final Config config) throws
             IOException,
             SAXException,
             ParserConfigurationException,
             XPathExpressionException
     {
         final List<Document> documents = new ArrayList<>();
-        for (final InputStream inputStream : inputStreams)
+        final List<Document> fieldDefOnlyDocuments = new ArrayList<>();
+        for (final InputStream inputStream : config.fixXmls)
         {
             documents.add(XmlFunctions.getDocument(inputStream));
         }
-        preProcessFields(documents);
+        for (final InputStream inputStream : config.fieldDefOnlyFixXmls)
+        {
+            fieldDefOnlyDocuments.add(XmlFunctions.getDocument(inputStream));
+        }
+        preProcessFields(documents, fieldDefOnlyDocuments);
     }
 
     Optional<FixFieldNode> getFixTreeRoot(final String messageTypeKey)
@@ -71,13 +108,14 @@ class FIXPreProcessor
         return Optional.ofNullable(fieldsIdToName.get(fieldKey));
     }
 
-    private void preProcessFields(final List<Document> documents)
+    private void preProcessFields(final List<Document> documents, final List<Document> fieldDefOnlyDocuments)
             throws
             XPathExpressionException
     {
         final HashMap<String, NodeList> componentsByName = new HashMap<>();
         populateComponents(documents, componentsByName);
         populateFields(documents);
+        populateFields(fieldDefOnlyDocuments);
 
         final List<Node> allMessages = getAllMessages(documents);
         final List<Node> headerAndTrailer = getAllHeaderAndTrailerFields(documents);

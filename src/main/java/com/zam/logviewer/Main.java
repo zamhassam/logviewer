@@ -56,7 +56,7 @@ public class Main
         final FIXRenderer fixRenderer;
         if (cmdOptions.getFixXmls() != null)
         {
-            fixRenderer = new FIXRenderer(cmdOptions.getFixXmls());
+            fixRenderer = FIXRenderer.createFIXRenderer(cmdOptions.getFixXmls());
         }
         else
         {
@@ -124,7 +124,7 @@ public class Main
             final FIXRenderer fixRenderer;
             if (cmdOptions.getFixXmls() != null)
             {
-                fixRenderer = new FIXRenderer(cmdOptions.getFixXmls());
+                fixRenderer = FIXRenderer.createFIXRenderer(cmdOptions.getFixXmls());
             }
             else
             {

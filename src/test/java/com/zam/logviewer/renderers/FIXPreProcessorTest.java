@@ -43,7 +43,7 @@ class FIXPreProcessorTest
                 "</fix>";
         final FIXPreProcessor
                 fixPreProcessor =
-                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+                FIXPreProcessor.createFIXPreProcessor(toInputStream(input));
         final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren()).isEqualTo(true);
@@ -59,6 +59,67 @@ class FIXPreProcessorTest
         assertThat(ioiTransType.hasChildren()).isEqualTo(false);
         assertThat(ioiTransType.getFieldName()).isEqualTo("IOITransType");
         assertThat(ioiTransType.getKey()).isEqualTo(28);
+    }
+
+    @Test
+    void acceptAdditionalFieldDefs() throws
+            SAXException,
+            ParserConfigurationException,
+            XPathExpressionException,
+            IOException
+    {
+        final String input =
+                "<fix>" +
+                "<messages>" +
+                "<message name=\"IOI\" msgtype=\"6\" msgcat=\"app\">" +
+                "<field name=\"IOITransType\" required=\"Y\"/>" +
+                "<field name=\"IOIID\" required=\"Y\"/>" +
+                "<field name=\"EnumField\" required=\"Y\"/>" +
+                "</message>" +
+                "</messages>" +
+                "<fields>" +
+                "<field number=\"23\" name=\"IOIID\" type=\"STRING\"/>" +
+                "<field number=\"24\" name=\"EnumField\" type=\"CHAR\"/>" +
+                "<field number=\"28\" name=\"IOITransType\" type=\"CHAR\">" +
+                "<value enum=\"N\" description=\"NEW\"/>" +
+                "<value enum=\"C\" description=\"CANCEL\"/>" +
+                "<value enum=\"R\" description=\"REPLACE\"/>" +
+                "</field>" +
+                "</fields>" +
+                "</fix>";
+        final String additionalFieldDefs =
+                "<fix>" +
+                "<messages>" +
+                "<message name=\"IOI\" msgtype=\"6\" msgcat=\"app\">" +
+                "<field name=\"IOITransType\" required=\"Y\"/>" +
+                "<field name=\"IOIID\" required=\"Y\"/>" +
+                "<field name=\"EnumField\" required=\"Y\"/>" +
+                "</message>" +
+                "</messages>" +
+                "<fields>" +
+                "<field number=\"23\" name=\"IOIID\" type=\"STRING\"/>" +
+                "<field number=\"24\" name=\"EnumField\" type=\"CHAR\">" +
+                "<value enum=\"A\" description=\"FIRST\"/>" +
+                "<value enum=\"B\" description=\"SECOND\"/>" +
+                "<value enum=\"C\" description=\"THIRD\"/>" +
+                "</field>" +
+                "<field number=\"28\" name=\"IOITransType\" type=\"CHAR\">" +
+                "<value enum=\"N\" description=\"NEW\"/>" +
+                "<value enum=\"C\" description=\"CANCEL\"/>" +
+                "<value enum=\"R\" description=\"REPLACE\"/>" +
+                "</field>" +
+                "</fields>" +
+                "</fix>";
+        final FIXPreProcessor.Config config = new FIXPreProcessor.Config().addFixXml(toInputStream(input)).addFieldDefOnlyFixXmls(toInputStream(additionalFieldDefs));
+        final FIXPreProcessor fixPreProcessor = new FIXPreProcessor(config);
+        final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
+        assertThat(fixTreeRoot.getChildren().containsKey(24)).isTrue();
+        assertThat(fixTreeRoot.getChildren().get(24).getEnumValue("B")).isEqualTo(Optional.of("SECOND"));
+    }
+
+    private static ByteArrayInputStream toInputStream(final String input)
+    {
+        return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -99,7 +160,7 @@ class FIXPreProcessorTest
                 "</fix>";
         final FIXPreProcessor
                 fixPreProcessor =
-                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+                FIXPreProcessor.createFIXPreProcessor(toInputStream(input));
         final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren()).isEqualTo(true);
@@ -159,7 +220,7 @@ class FIXPreProcessorTest
                 "</fix>";
         final FIXPreProcessor
                 fixPreProcessor =
-                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+                FIXPreProcessor.createFIXPreProcessor(toInputStream(input));
         final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren()).isEqualTo(true);
@@ -226,7 +287,7 @@ class FIXPreProcessorTest
                 "</fix>";
         final FIXPreProcessor
                 fixPreProcessor =
-                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+                FIXPreProcessor.createFIXPreProcessor(toInputStream(input));
         final FIXPreProcessor.FixFieldNode fixTreeRoot = fixPreProcessor.getFixTreeRoot("6").orElseThrow(AssertionFailedError::new);
 
         assertThat(fixTreeRoot.hasChildren()).isEqualTo(true);
@@ -288,7 +349,7 @@ class FIXPreProcessorTest
                 "</fix>";
         final FIXPreProcessor
                 fixPreProcessor =
-                new FIXPreProcessor(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+                FIXPreProcessor.createFIXPreProcessor(toInputStream(input));
 
 
         final Optional<String> enumKeyRepr = fixPreProcessor.getEnumKeyRepr(28, "N");
