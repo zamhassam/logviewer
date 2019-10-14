@@ -49,13 +49,6 @@ public class FIXRenderer implements BottomPaneRenderer<String>
 
     }
 
-    public static void main(String[] args)
-    {
-        final String line = "2018-10-03 15:41:13,388 FixLogger [bolt-thread-1] INFO : Sending FIX  message: 8=FIX.4.4|9=124|35=BE|49=BBNDTRFMD1|56=FIXCTSBOBGW|34=2|52=20181003-14:41:13.386|923=eS8B7kkLlcxzPshEy4z8|924=1|553=bbndtrfmd1|554=testing1|10=046|";
-        final FIXRenderer fixRenderer = new FIXRenderer("/home/zameer.hassam/transficc/transficc/venue/fixspecs/src/main/resources/quickfix-specs/bgc-gfi-dictionary.xml");
-        System.out.println(fixRenderer.renderBottomPaneContents(line));
-    }
-
     public FIXRenderer(final String... fixFileLocation)
     {
         try
