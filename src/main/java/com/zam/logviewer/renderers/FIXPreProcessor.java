@@ -34,7 +34,6 @@ class FIXPreProcessor
     private final Map<String, FixFieldNode> messageToFixTree = new HashMap<>();
     private final Map<Integer, String> fieldsIdToName = new HashMap<>();
     private final Map<String, Integer> fieldsNameToId = new HashMap<>();
-    private final List<Document> documents;
     private Map<Integer, FixFieldNode> allFields = new HashMap<>();
 
     FIXPreProcessor(final InputStream... inputStreams) throws
@@ -43,7 +42,7 @@ class FIXPreProcessor
             ParserConfigurationException,
             XPathExpressionException
     {
-        documents = new ArrayList<>();
+        final List<Document> documents = new ArrayList<>();
         for (final InputStream inputStream : inputStreams)
         {
             documents.add(XmlFunctions.getDocument(inputStream));
@@ -77,19 +76,25 @@ class FIXPreProcessor
             XPathExpressionException
     {
         final HashMap<String, NodeList> componentsByName = new HashMap<>();
+        populateComponents(documents, componentsByName);
+        populateFields(documents);
+
+        final List<Node> allMessages = getAllMessages(documents);
+        final List<Node> headerAndTrailer = getAllHeaderAndTrailerFields(documents);
+
+        for (final Node message : allMessages)
+        {
+            addHeaderTrailerFields(headerAndTrailer, message);
+            flattenComponentStructure(message, componentsByName);
+            populateFixTree(messageToFixTree, message, allFields, fieldsNameToId);
+        }
+    }
+
+    private List<Node> getAllHeaderAndTrailerFields(final List<Document> documents) throws XPathExpressionException
+    {
+        final List<Node> headerAndTrailer = new ArrayList<>();
         for (final Document document : documents)
         {
-            final NodeList components = XmlFunctions.getNodeList(document, COMPONENTS_XPATH);
-            populateComponents(components, componentsByName);
-            final NodeList fields = XmlFunctions.getNodeList(document, FIELDS_XPATH);
-            populateFields(fields, fieldsIdToName, fieldsNameToId, allFields);
-        }
-
-        final List<Node> headerAndTrailer = new ArrayList<>();
-        final List<Node> allMessages = new ArrayList<>();
-        for (final Document document : this.documents)
-        {
-            final NodeList messages = XmlFunctions.getNodeList(document, MESSAGES_XPATH);
             final Node header = XmlFunctions.getNode(document, HEADER_XPATH);
             final Node trailer = XmlFunctions.getNode(document, TRAILER_XPATH);
             if (header != null && header.hasChildNodes())
@@ -100,14 +105,36 @@ class FIXPreProcessor
             {
                 XmlFunctions.forEach(trailer.getChildNodes(), headerAndTrailer::add);
             }
+        }
+        return headerAndTrailer;
+    }
+
+    private List<Node> getAllMessages(final List<Document> documents) throws XPathExpressionException
+    {
+        final List<Node> allMessages = new ArrayList<>();
+        for (final Document document : documents)
+        {
+            final NodeList messages = XmlFunctions.getNodeList(document, MESSAGES_XPATH);
             XmlFunctions.forEach(messages, allMessages::add);
         }
+        return allMessages;
+    }
 
-        for (final Node message : allMessages)
+    private void populateFields(final List<Document> documents) throws XPathExpressionException
+    {
+        for (final Document document : documents)
         {
-            addHeaderTrailerFields(headerAndTrailer, message);
-            flattenComponentStructure(message, componentsByName);
-            populateFixTree(messageToFixTree, message, allFields, fieldsNameToId);
+            final NodeList fields = XmlFunctions.getNodeList(document, FIELDS_XPATH);
+            populateFields(fields, fieldsIdToName, fieldsNameToId, allFields);
+        }
+    }
+
+    private void populateComponents(final List<Document> documents, final HashMap<String, NodeList> componentsByName) throws XPathExpressionException
+    {
+        for (final Document document : documents)
+        {
+            final NodeList components = XmlFunctions.getNodeList(document, COMPONENTS_XPATH);
+            populateComponents(components, componentsByName);
         }
     }
 
