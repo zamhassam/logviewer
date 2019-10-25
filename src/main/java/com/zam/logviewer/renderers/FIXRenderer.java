@@ -84,12 +84,22 @@ public class FIXRenderer implements BottomPaneRenderer<String>
 
         public FixStreamConfig addFixFile(final InputStream fixFile)
         {
+            if (fixFile == null)
+            {
+                LOGGER.warn("Tried to add null input stream");
+                return this;
+            }
             fixFiles.add(fixFile);
             return this;
         }
 
         public FixStreamConfig addDefsFixFile(final InputStream defsFixFile)
         {
+            if (defsFixFile == null)
+            {
+                LOGGER.warn("Tried to add null input stream");
+                return this;
+            }
             fixFieldDefsOnly.add(defsFixFile);
             return this;
         }
