@@ -43,6 +43,9 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.guava/guava
     compile group: 'com.google.guava', name: 'guava', version: '26.0-jre'
 
+    // https://mvnrepository.com/artifact/org.agrona/agrona
+    compile group: 'org.agrona', name: 'agrona', version: '1.0.11'
+
     // https://mvnrepository.com/artifact/org.mockito/mockito-all
     testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
 
