@@ -4,7 +4,6 @@ import org.agrona.DirectBuffer;
 
 public class FixMapFlyweight
 {
-
     private final TagMap tagMap = new TagMap();
     private final ParsingContext parsingContext = new ParsingContext();
 
@@ -29,6 +28,24 @@ public class FixMapFlyweight
         final int start = tagMap.start(tag);
         final int length = tagMap.length(tag);
         parsingContext.buffer.getStringWithoutLengthAscii(start, length, appendable);
+    }
+
+    public int intVal(final int tag)
+    {
+        final int start = tagMap.start(tag);
+        final int length = tagMap.length(tag);
+        return atoi(parsingContext.buffer, start, length);
+    }
+
+    private static int atoi(final DirectBuffer buffer, final int offset, final int length)
+    {
+        int result = 0;
+        for (int i = 0; i < length; i++)
+        {
+            result *= 10;
+            result += buffer.getByte(offset + i) - '0';
+        }
+        return result;
     }
 
     private static final class ParsingContext

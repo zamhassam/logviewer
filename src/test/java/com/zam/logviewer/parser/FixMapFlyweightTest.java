@@ -27,4 +27,16 @@ class FixMapFlyweightTest
         fixMapFlyweight.stringVal(49, actual);
         assertThat(actual.toString()).isEqualTo("CLIENT12");
     }
+
+    @Test
+    void shouldGetInt()
+    {
+        final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer();
+        buffer.putStringWithoutLengthAscii(
+                0,
+                DEAL
+        );
+        fixMapFlyweight.wrap(buffer, 0, DEAL.length());
+        assertThat(fixMapFlyweight.intVal(34)).isEqualTo(7);
+    }
 }
