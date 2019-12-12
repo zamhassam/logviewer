@@ -15,17 +15,14 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class FIXRenderer implements BottomPaneRenderer<String>
 {
     private static final Logger LOGGER = getLogger();
-    private static final Pattern FIX_MSG = Pattern.compile("^.*[^\\d]*(8=FIX.*[\\001|].*[\\001|]).*$");
-    private static final Pattern BEGINSTRING = Pattern.compile("8=(FIX.*?)[\\001|].*.*$");
-    private static final Pattern APPLVERID = Pattern.compile(".*[\\001|]1128=(.*?)[\\001|].*$");
-    private static final Pattern VALID_FIX_FIELD = Pattern.compile("\\S+=\\S+");
+    private static final String MESSAGE_START = "8=FIX";
+    private static final Pattern FIELD_PATTERN = Pattern.compile("(\\d+)=([^\\u0001|]*)[\\u0001|]?");
     private static final Map<String, String> BEGINSTRING_TO_XML = new HashMap<>();
     private static final Map<String, String> APPLVER_TO_XML = new HashMap<>();
     private static final int INDENT = 2;
@@ -137,36 +134,19 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
-    private Optional<String> findFixMsg(final String line)
-    {
-        final Matcher fixMsgMatcher = FIX_MSG.matcher(line);
-        if (!fixMsgMatcher.find())
-        {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(fixMsgMatcher.group(1));
-    }
-
     @Override
     public List<String> renderBottomPaneContents(final String line)
     {
-        final Optional<String> fixMsg = findFixMsg(line);
-        if (!fixMsg.isPresent())
-        {
-            return Collections.emptyList();
-        }
-        final Optional<FIXPreProcessor> fixPreProcessor = getFixPreProcessor(fixMsg.get());
+        final List<FixPair> fixFields = extractMessage(line);
+
+        final Optional<FIXPreProcessor> fixPreProcessor = getFixPreProcessor(fixFields);
         if (!fixPreProcessor.isPresent())
         {
             return Collections.emptyList();
         }
+
         try
         {
-            final List<FixPair> fixFields = Arrays.stream(fixMsg.get().split("[\\001|]"))
-                    .filter(s -> VALID_FIX_FIELD.matcher(s).find())
-                    .map(s -> s.split("="))
-                    .map(keyVal -> new FixPair(keyVal[0], keyVal[1]))
-                    .collect(Collectors.toList());
             return renderFixFields(fixFields, fixPreProcessor.get());
         }
         catch (Exception e)
@@ -255,7 +235,7 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         return pos;
     }
 
-    private Optional<FIXPreProcessor> getFixPreProcessor(final String fixMsg)
+    private Optional<FIXPreProcessor> getFixPreProcessor(final List<FixPair> fixMsg)
     {
         if (fixPreProcessor == null)
         {
@@ -289,35 +269,24 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         return keyRepr.orElse(fixPair.getKey()) + "[" + fixPair.getKey() + "] = " + enumRepr;
     }
 
-    private Optional<FIXPreProcessor> guessAndPopulateFields(final String fixMsg)
+    private Optional<FIXPreProcessor> guessAndPopulateFields(final List<FixPair> fixMsg)
             throws SAXException, ParserConfigurationException, XPathExpressionException, IOException
     {
         final List<String> fixXmls = new ArrayList<>();
-        final Matcher beginStringMatcher = BEGINSTRING.matcher(fixMsg);
-        if (!beginStringMatcher.find())
-        {
-            return Optional.empty();
-        }
 
-        final String beginString = beginStringMatcher.group(1);
+        final String beginString = tagValue(fixMsg, "8").orElse("");
         final String fixXml = BEGINSTRING_TO_XML.get(beginString);
         if (fixXml == null)
         {
             return Optional.empty();
         }
+
         fixXmls.add(fixXml);
-        if (beginString.startsWith(FixVersions.FIXT_SESSION_PREFIX))
+        final String applVerId = tagValue(fixMsg, "1128").orElse("");
+        final String dataDictFixXml = APPLVER_TO_XML.get(applVerId);
+        if (dataDictFixXml != null)
         {
-            final Matcher applVerIdMatcher = APPLVERID.matcher(fixMsg);
-            if (applVerIdMatcher.find())
-            {
-                final String applVerId = applVerIdMatcher.group(1);
-                final String dataDictFixXml = APPLVER_TO_XML.get(applVerId);
-                if (dataDictFixXml != null)
-                {
-                    fixXmls.add(dataDictFixXml);
-                }
-            }
+            fixXmls.add(dataDictFixXml);
         }
 
         return Optional.of(parseFixXmlsResource(fixXmls.toArray(new String[0])));
@@ -344,25 +313,35 @@ public class FIXRenderer implements BottomPaneRenderer<String>
         }
     }
 
-    private FIXPreProcessor parseFixXmls(final String[] fixFileLocations)
-            throws IOException, SAXException, ParserConfigurationException, XPathExpressionException
+    private static List<FixPair> extractMessage(String line) {
+        final int messageStart = line.indexOf(MESSAGE_START);
+        if (messageStart == -1)
+        {
+            return Collections.emptyList();
+        }
+
+        final ArrayList<FixPair> fieldList = new ArrayList<>();
+        final Matcher matcher = FIELD_PATTERN.matcher(line).region(messageStart, line.length());
+        while (matcher.find())
+        {
+            String tag = matcher.group(1);
+            String value = matcher.group(2);
+            fieldList.add(new FixPair(tag, value));
+        }
+        return fieldList;
+    }
+
+    private static Optional<String> tagValue(List<FixPair> fixMsg, String tagName)
     {
-        final List<InputStream> inputStreams = new ArrayList<>();
-        try
+        for ( FixPair tagValuePair : fixMsg)
         {
-            for (final String fixFileLocation : fixFileLocations)
+            if (tagName.equals(tagValuePair.getKey()))
             {
-                inputStreams.add(new FileInputStream(fixFileLocation));
-            }
-            return FIXPreProcessor.createFIXPreProcessor(inputStreams.toArray(new InputStream[0]));
-        }
-        finally
-        {
-            for (final InputStream inputStream : inputStreams)
-            {
-                inputStream.close();
+                return Optional.of(tagValuePair.getVal());
             }
         }
+
+        return Optional.empty();
     }
 
 }
