@@ -287,6 +287,115 @@ class FIXRendererTest
     }
 
     @Test
+    void shouldRenderFixMsgWithMultilineText()
+    {
+        final List<String> actual = fixRenderer.renderBottomPaneContents(
+                "20171016-12:44:21.456 [thread-1] INFO com.zam.logviewer.Dummy - 8=FIX.4.4|9=196|35=X" +
+                "|49=A|56=B|34=12|52=20100318-03:21:11.364|262=A|268=1|279=0" +
+                "|269=0|278=BID|55=EUR/USD|58=Weird\n" +
+                "(but perfectly valid)\n" +
+                "multiline text\n" +
+                "which also contains '=' character" +
+                "|270=1.37215|15=EUR|271=2500000|346=1" +
+                "|10=171| <- received this message");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--TargetCompID[56] = B");
+        expected.add("|--MsgSeqNum[34] = 12");
+        expected.add("|--SendingTime[52] = 20100318-03:21:11.364");
+        expected.add("|--MDReqID[262] = A");
+        expected.add("|--NoMDEntries[268] = 1");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = BID[0]");
+        expected.add("  |--MDEntryID[278] = BID");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--Text[58] = Weird");
+        expected.add("(but perfectly valid)");
+        expected.add("multiline text");
+        expected.add("which also contains '=' character");
+        expected.add("  |--MDEntryPx[270] = 1.37215");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  |--MDEntrySize[271] = 2500000");
+        expected.add("  |--NumberOfOrders[346] = 1");
+        expected.add("|--CheckSum[10] = 171");
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldRenderFixMessageTruncatedInTheMiddleOfLastValue()
+    {
+        final List<String> actual = fixRenderer.renderBottomPaneContents(
+                "20171016-12:44:21.456 [thread-1] INFO com.zam.logviewer.Dummy - 8=FIX.4.4|9=196|35=X" +
+                        "|49=A|56=B|34=12|52=20100318-03:21:11.364|262=A|268=2|279=0" +
+                        "|269=0|278=BID|55=EUR/USD|270=1.37215|15=EUR|271=2500000|346=1" +
+                        "|279=0|269=1|278=OFFER|55=EUR/USD|270=1.37224|15=EUR|271=250");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--TargetCompID[56] = B");
+        expected.add("|--MsgSeqNum[34] = 12");
+        expected.add("|--SendingTime[52] = 20100318-03:21:11.364");
+        expected.add("|--MDReqID[262] = A");
+        expected.add("|--NoMDEntries[268] = 2");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = BID[0]");
+        expected.add("  |--MDEntryID[278] = BID");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37215");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  |--MDEntrySize[271] = 2500000");
+        expected.add("  |--NumberOfOrders[346] = 1");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = OFFER[1]");
+        expected.add("  |--MDEntryID[278] = OFFER");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37224");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  |--MDEntrySize[271] = 250");
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldRenderFixMessageTruncatedInTheMiddleOfLastTag()
+    {
+        final List<String> actual = fixRenderer.renderBottomPaneContents(
+                "20171016-12:44:21.456 [thread-1] INFO com.zam.logviewer.Dummy - 8=FIX.4.4|9=196|35=X" +
+                        "|49=A|56=B|34=12|52=20100318-03:21:11.364|262=A|268=2|279=0" +
+                        "|269=0|278=BID|55=EUR/USD|270=1.37215|15=EUR|271=2500000|346=1" +
+                        "|279=0|269=1|278=OFFER|55=EUR/USD|270=1.37224|15=EUR|27");
+        final List<String> expected = new ArrayList<>();
+        expected.add("+--BeginString[8] = FIX.4.4");
+        expected.add("|--BodyLength[9] = 196");
+        expected.add("|--MsgType[35] = MARKET_DATA_INCREMENTAL_REFRESH[X]");
+        expected.add("|--SenderCompID[49] = A");
+        expected.add("|--TargetCompID[56] = B");
+        expected.add("|--MsgSeqNum[34] = 12");
+        expected.add("|--SendingTime[52] = 20100318-03:21:11.364");
+        expected.add("|--MDReqID[262] = A");
+        expected.add("|--NoMDEntries[268] = 2");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = BID[0]");
+        expected.add("  |--MDEntryID[278] = BID");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37215");
+        expected.add("  |--Currency[15] = EUR");
+        expected.add("  |--MDEntrySize[271] = 2500000");
+        expected.add("  |--NumberOfOrders[346] = 1");
+        expected.add("  +--MDUpdateAction[279] = NEW[0]");
+        expected.add("  |--MDEntryType[269] = OFFER[1]");
+        expected.add("  |--MDEntryID[278] = OFFER");
+        expected.add("  |--Symbol[55] = EUR/USD");
+        expected.add("  |--MDEntryPx[270] = 1.37224");
+        expected.add("  |--Currency[15] = EUR");
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
     void shouldNotRenderNonFixMessage()
     {
         final List<String> strings = fixRenderer.renderBottomPaneContents("This is not a valid log line.");
